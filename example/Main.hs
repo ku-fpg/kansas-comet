@@ -17,8 +17,6 @@ import Control.Monad.IO.Class
 
 import qualified Data.Text.Lazy as Text
 
--- import Web.Sunroof
-
 main = do
         -- build the scotty dispatch app
         scotty 3000 $ do
