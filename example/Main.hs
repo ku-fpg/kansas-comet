@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
--- Example of using tractor
+-- Example of using Kansas Comet
 
 module Main where
 
 import Data.Aeson as A
 import Data.Aeson.Types as AP
 import Web.Scotty
-import Web.Tractor as T
+import Web.KansasComet as KC
 import Data.Default
 import Control.Monad
 import qualified Control.Applicative as App
@@ -17,10 +17,9 @@ import Control.Monad.IO.Class
 
 import qualified Data.Text.Lazy as Text
 
-import Web.Sunroof
+-- import Web.Sunroof
 
 main = do
-
         -- build the scotty dispatch app
         scotty 3000 $ do
                 -- provide some static pages, include jquery
@@ -29,13 +28,13 @@ main = do
                 sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
                           | nm <- ["jquery.js","jquery-json.js"]
                           ]
-                j_tractor <- liftIO jTractorStatic
-                get "/jquery-tractor.js" $ file $ j_tractor
+                kcomet <- liftIO kCometPlugin
+                get "/kansas-comet.js" $ file $ kcomet
 
                 -- connect /example to the following web_app
                 connect opts web_app
 
-opts :: T.Options
+opts :: KC.Options
 opts = def { prefix = "/example", verbose = 2 }
 
 -- This is run each time the page is first accessed

@@ -1,11 +1,10 @@
-
-tractor-example::
+kcomet-example::
 	rm -f Main.o
-# 	ghc --make Main.hs -o tractor-example -threaded
-	ghc --make Main.hs -o tractor-example -threaded -i..:../dist/build/autogen/
-	export tractor_datadir=.. ; ./tractor-example
+# 	ghc --make Main.hs -o kcomet-example -threaded
+	ghc --make Main.hs -o kcomet-example -threaded -i..:../dist/build/autogen/
+	export kansas_comet_datadir=.. ; ./kcomet-example
 
 tictactoe::
 	rm -f TicTacToe.o
 	ghc --make TicTacToe.hs -o tictactoe -threaded -i..:../dist/build/autogen/
-	export tractor_datadir=.. ; ./tictactoe
+	export kansas_comet_datadir=.. ; ./tictactoe

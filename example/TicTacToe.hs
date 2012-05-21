@@ -13,15 +13,15 @@ import qualified Data.Text.Lazy as T
 
 import Network.Wai.Middleware.Static
 import Web.Scotty
-import Web.Tractor
+import Web.KansasComet
 
 main = scotty 3000 $ do
     middleware static
 
     get "/" $ file "tictactoe.html"
 
-    j_tractor <- liftIO jTractorStatic
-    get "/jquery-tractor.js" $ file $ j_tractor
+    kcomet <- liftIO kCometPlugin
+    get "/kansas-comet.js" $ file $ kcomet
 
     -- connect /example to the following web_app
     connect (def { verbose = 3 }) web_app

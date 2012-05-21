@@ -1,8 +1,8 @@
-Name:                tractor
+Name:                kansas-comet
 Version:             0.1
 Synopsis:            A javascript push mechanism and event listener
-Homepage:            https://github.com/
-Bug-reports:         https://github.com/
+Homepage:            https://github.com/kufpg/kansas-comet/
+Bug-reports:         https://github.com/kufpg/kansas-comet/
 License:             BSD3
 License-file:        LICENSE
 Author:              Andrew Gill <andygill@ku.edu>
@@ -16,20 +16,14 @@ Description:
   A transport level remote JavaScript RESTful push mechanism.
 
 data-files:
-    static/jquery-tractor.js
+    static/kansas-comet.js
 
 Extra-source-files:
     README
-    examples/basic.hs
-    examples/urlshortener.hs
-    examples/json.hs
-    examples/static/jquery.js
-    examples/static/jquery-json.js
-    examples/static/json.js
 
 Library
-  Exposed-modules:     Web.Tractor
-  other-modules:       Paths_tractor
+  Exposed-modules:     Web.KansasComet
+  other-modules:       Paths_kansas_comet
   default-language:    Haskell2010
   build-depends:       aeson            >= 0.5,
                        base             >= 4.3.1 && < 5,
@@ -47,4 +41,4 @@ Library
 
 --source-repository head
 --  type:     git
---  location: git://github.com/xich/scotty.git
+--  location: git://github.com/kufpg/kansas-comet.git

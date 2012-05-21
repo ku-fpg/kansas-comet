@@ -1,22 +1,20 @@
-// Tractor is our workhorse
-
 var the_prefix = "";
 // This is our main loop; get a command from the Haskell server,
 // execute it, go back and ask for more.
-function tractor_redraw(count) {
-//                alert("tractor_redraw : " + "/example/act/" + tractor_session + "/" + count);
-   $.ajax({ url: the_prefix + "/act/" + tractor_session + "/" + count,
+function kansascomet_redraw(count) {
+//                alert("kansascomet_redraw : " + "/example/act/" + kansascomet_session + "/" + count);
+   $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
             type: "GET",
             dataType: "script",
             success: function success() {
-                        tractor_redraw(count + 1);
+                        kansascomet_redraw(count + 1);
             }
             // TODO: Add failure
           });
 }
 
-function tractor_connect(prefix) {
-     // start the server-side via tractor
+function kansascomet_connect(prefix) {
+     // start the server-side via kansascomet
      the_prefix = prefix;
      $.ajax({ url: the_prefix,
               type: "POST",
@@ -28,7 +26,7 @@ var eventQueues = {};   // TODO: add the use of the queue
 var eventCallbacks = {};
 
 // This says someone is listening on a specific event
-function tractor_register(eventname, fn) {
+function kansascomet_register(eventname, fn) {
      eventQueues[eventname] = [];
 
      $("body").on(eventname, "." + eventname, function (event) {
@@ -47,7 +45,7 @@ function tractor_register(eventname, fn) {
 }
 
 // This waits for an event. The second argument is the continuation
-function tractor_waitFor(eventname, fn) {
+function kansascomet_waitFor(eventname, fn) {
    // TODO: check to see if there is an event waiting
    if (eventCallbacks[eventname] == undefined) {
        eventCallbacks[eventname] = function (e) {
@@ -63,8 +61,8 @@ function tractor_waitFor(eventname, fn) {
 
 // There is a requirement that obj be an object or array.
 // See RFC 4627 for details.
-function tractor_reply(uq,obj) {
-        $.ajax({ url: the_prefix + "/reply/" + tractor_session + "/" + uq,
+function kansascomet_reply(uq,obj) {
+        $.ajax({ url: the_prefix + "/reply/" + kansascomet_session + "/" + uq,
                  type: "POST",
                  data: $.toJSON(obj),
                  contentType: "application/json; charset=utf-8",
@@ -92,7 +90,7 @@ function waitForS(eventname) {
 //      alert('waitForS');
         return function(k){
 //              alert("wait CC");
-                tractor_waitFor(eventname, k);
+                kansascomet_waitFor(eventname, k);
         }
 }
 

@@ -1,15 +1,13 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-module Web.Tractor where
+module Web.KansasComet where
 
 import Web.Scotty
 import Data.Aeson
 import Control.Monad
-import Language.JavaScript.Parser as JS
-import Language.JavaScript.Pretty.Printer as PP
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
 import Control.Monad.IO.Class
-import Paths_tractor
+import Paths_kansas_comet
 import qualified Data.Map as Map
 import Control.Concurrent
 import Data.Default
@@ -26,7 +24,7 @@ connect :: Options             -- ^ URL path prefix for this page
         -> (Document -> IO ()) -- ^ called for access of the page
         -> ScottyM ()
 connect opt callback = do
-   when (verbose opt >= 1) $ liftIO $ putStrLn $ "tractor connect with prefix=" ++ show (prefix opt)
+   when (verbose opt >= 1) $ liftIO $ putStrLn $ "kansas-comet connect with prefix=" ++ show (prefix opt)
 
    -- A unique number generator, or ephemeral generator.
    -- This is the (open) secret between the client and server.
@@ -57,7 +55,7 @@ connect opt callback = do
    post (capture $ prefix opt ++ "/") $ do
             liftIO $ print "got root"
             uq  <- liftIO $ newContext
-            text (T.pack $ "tractor_session = " ++ show uq ++ ";tractor_redraw(0);")
+            text (T.pack $ "kansascomet_session = " ++ show uq ++ ";kansascomet_redraw(0);")
 
    -- GET the updates to the documents (should this be an (empty) POST?)
 
@@ -68,7 +66,7 @@ connect opt callback = do
             num <- param "id"
 
             when (verbose opt >= 2) $ liftIO $ putStrLn $
-                "tractor: get .../act/" ++ show num
+                "Kansas Comet: get .../act/" ++ show num
 --            liftIO $ print (num :: Int)
 
             let tryPushAction :: TMVar T.Text -> ActionM ()
@@ -117,12 +115,12 @@ connect opt callback = do
 
    return ()
 
--- 'jTractorStatic' provide access to the jTractor jQuery plugin. The argument
+-- 'kCometPlugin' provide access to the Kansas Comet jQuery plugin. The argument
 -- is the path to the collection that holds the static javascript files.
-jTractorStatic :: IO String
-jTractorStatic = do
+kCometPlugin :: IO String
+kCometPlugin = do
         dataDir <- getDataDir
-        return $ dataDir ++ "/static/jquery-tractor.js"
+        return $ dataDir ++ "/static/kansas-comet.js"
 
 -- 'send' sends a javascript fragement to a document.
 -- 'send' suspends the thread if the last javascript has not been *dispatched*
@@ -149,7 +147,7 @@ listen doc eventName = atomically $ do
 register :: Document -> EventName -> T.Text -> IO ()
 register doc eventName eventBuilder =
         send doc $ T.pack $ concat
-                        [ "tractor_register(" ++ show eventName ++ ",function(event,widget) {"
+                        [ "kansascomet_register(" ++ show eventName ++ ",function(event,widget) {"
                         , T.unpack eventBuilder
                         , "});"
                         ]
@@ -158,7 +156,7 @@ waitFor :: Document -> EventName -> IO Value
 waitFor doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
         send doc $ T.pack $ concat
-                [ "tractor_waitFor(" ++ show eventName ++ ",function(e) { tractor_reply(" ++ show uq ++ ",e);});" ]
+                [ "kansascomet_waitFor(" ++ show eventName ++ ",function(e) { kansascomet_reply(" ++ show uq ++ ",e);});" ]
         getReply doc uq
 
 -- internal function, waits for a numbered reply
@@ -178,7 +176,7 @@ query :: Document -> T.Text -> IO Value
 query doc qText = do
         let uq = 37845 :: Int -- should be uniq
         send doc $ T.pack $ concat
-                [ "tractor_reply(" ++ show uq ++ ",function(){"
+                [ "kansascomet_reply(" ++ show uq ++ ",function(){"
                 , T.unpack qText
                 , "}());"
                 ]
