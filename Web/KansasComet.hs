@@ -12,7 +12,8 @@ import qualified Data.Map as Map
 import Control.Concurrent
 import Data.Default
 
-import qualified Data.Text.Lazy as T
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text      as T
 
 -- | connect "/foobar" (...) gives
 
@@ -55,7 +56,7 @@ connect opt callback = do
    post (capture $ prefix opt ++ "/") $ do
             liftIO $ print "got root"
             uq  <- liftIO $ newContext
-            text (T.pack $ "$.kc.session(" ++ show uq ++ ");")
+            text (LT.pack $ "$.kc.session(" ++ show uq ++ ");")
 
    -- GET the updates to the documents (should this be an (empty) POST?)
 
@@ -83,14 +84,14 @@ connect opt callback = do
                     case res of
                      Just js -> do
                             liftIO $ putStrLn $ show js
-                            text js
+                            text $ LT.pack $ T.unpack js
                      Nothing  ->
                             -- give the browser something to do (approx every second)
-                            text (T.pack "")
+                            text (LT.pack "")
 
             db <- liftIO $ atomically $ readTVar contextDB
             case Map.lookup num db of
-               Nothing  -> text (T.pack $ "alert('Can not find act #" ++ show num ++ "');")
+               Nothing  -> text (LT.pack $ "alert('Can not find act #" ++ show num ++ "');")
                Just doc -> tryPushAction (sending doc)
 
 
@@ -105,13 +106,13 @@ connect opt callback = do
            case Map.lookup num db of
                Nothing  -> do
                    liftIO $ print ("ignoring reply",uq,val)
-                   text (T.pack $ "alert('Ignore reply for session #" ++ show num ++ "');")
+                   text (LT.pack $ "alert('Ignore reply for session #" ++ show num ++ "');")
                Just doc -> do
                    liftIO $ do
                          atomically $ do
                            m <- readTVar (listening doc)
                            writeTVar (listening doc) $ Map.insert uq val m
-                   text $ T.pack ""
+                   text $ LT.pack ""
 
    return ()
 
@@ -123,10 +124,12 @@ kCometPlugin = do
         return $ dataDir ++ "/static/kansas-comet.js"
 
 -- 'send' sends a javascript fragement to a document.
+-- The string argument will be evaluated before sending (in case there is an error,
+-- or some costly evaluation needs done first).
 -- 'send' suspends the thread if the last javascript has not been *dispatched*
 -- the the browser.
-send :: Document -> T.Text -> IO ()
-send doc js = atomically $ putTMVar (sending doc) js
+send :: Document -> String -> IO ()
+send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 
 {-
 -- | listen sets up a RESTful listener and a new Channel that listens
@@ -144,18 +147,18 @@ listen doc eventName = atomically $ do
 -}
 
 -- The Text argument returns an object, which is what part of the event get sent to Haskell.
-register :: Document -> EventName -> T.Text -> IO ()
+register :: Document -> EventName -> String -> IO ()
 register doc eventName eventBuilder =
-        send doc $ T.pack $ concat
+        send doc $ concat
                         [ "$.kc.register(" ++ show eventName ++ ",function(event,widget) {"
-                        , T.unpack eventBuilder
+                        , eventBuilder
                         , "});"
                         ]
 
 waitFor :: Document -> EventName -> IO Value
 waitFor doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
-        send doc $ T.pack $ concat
+        send doc $ concat
                 [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         getReply doc uq
 
@@ -172,12 +175,12 @@ getReply doc num = do
 
 -- TODO: make thread safe
 -- The test ends with a return for the value you want to see.
-query :: Document -> T.Text -> IO Value
+query :: Document -> String -> IO Value
 query doc qText = do
         let uq = 37845 :: Int -- should be uniq
-        send doc $ T.pack $ concat
+        send doc $ concat
                 [ "$.kc.reply(" ++ show uq ++ ",function(){"
-                , T.unpack qText
+                , qText
                 , "}());"
                 ]
         getReply doc uq

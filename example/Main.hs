@@ -15,7 +15,8 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad.IO.Class
 
-import qualified Data.Text.Lazy as Text
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text      as T
 
 main = do
         -- build the scotty dispatch app
@@ -58,7 +59,7 @@ web_app :: Document -> IO ()
 web_app doc = do
         print "web_app"
 
-        register doc "click" $ Text.pack $ concat
+        register doc "click" $ concat
                 [ " return { pageX : event.pageX"
                 , "        , pageY : event.pageY"
                 , "        , id    : $(widget).attr('id')"
@@ -67,7 +68,7 @@ web_app doc = do
 
         print "BLA"
 
-        register doc "slide" $ Text.pack $ concat
+        register doc "slide" $ concat
                 [ " return ({ id    : $(widget).attr('id')"
                 , "         , count  : $(widget).slider('value')"
                 , "         });"
@@ -80,8 +81,8 @@ web_app doc = do
                 let Success (Slide _ n) :: Result Slide = parse parseJSON res
                 print n
                 --                res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
-                send doc (Text.pack $ "$('#fib-out').html('&#171;&#8226;&#187;')")
-                send doc (Text.pack $ "$('#fib-out').text('" ++ show (fib n) ++ "')")
+                send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
+                send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
 {-
                 let Success (Wrapped a) :: Result (Wrapped String) = parse parseJSON res
                 print a
