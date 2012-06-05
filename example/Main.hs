@@ -24,7 +24,7 @@ main = do
                 -- This is scotty code
                 get "/" $ file $ "index.html"
                 sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
-                          | nm <- ["jquery.js","jquery-json.js"] ++ [
+                          | nm <- ["js/jquery.js","js/jquery-json.js"] ++ [
 
                                 "down/css/ui-lightness/images/ui-bg_diagonals-thick_18_b81900_40x40.png",
                                 "down/css/ui-lightness/images/ui-bg_diagonals-thick_20_666666_40x40.png",
@@ -43,8 +43,8 @@ main = do
 
                           ]
                 kcomet <- liftIO kCometPlugin
-                get "/kansas-comet.js" $ file $ kcomet
-                get "/jquery-ui.js" $ file $ "./down/js/jquery-ui-1.8.20.custom.min.js"
+                get "/js/kansas-comet.js" $ file $ kcomet
+                get "/js/jquery-ui.js" $ file $ "./down/js/jquery-ui-1.8.20.custom.min.js"
                 get "/down/css/ui-lightness/jquery-ui-1.8.20.custom.css" $ file $
                                 "./down/css/ui-lightness/jquery-ui-1.8.20.custom.css"
                 -- connect /example to the following web_app

@@ -1,40 +1,29 @@
 <html>
     <head>
         <title>Kansas Comet Example</title>
-        <script type="text/javascript" src="jquery.js"></script>
-        <script type="text/javascript" src="jquery-json.js"></script>
-        <script type="text/javascript" src="kansas-comet.js"></script>
+        <script type="text/javascript" src="js/jquery.js"></script>
+        <script type="text/javascript" src="js/jquery-json.js"></script>
+        <script type="text/javascript" src="js/kansas-comet.js"></script>
         <link type="text/css" href="down/css/ui-lightness/jquery-ui-1.8.20.custom.css" rel="Stylesheet" />	
-        <script type="text/javascript" src="jquery-ui.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.js"></script>
     </head>
     <body>
-         fib <input id="fib-in" value="0" size="2"></text> = <span id="fib-out">1</span>
-         <button id="button1" class="click">Compute</button>
-
 
 <p>
-	<label for="amount">fib</label>
-	<input type="text" id="amount" style="border:0; color:#f6931f; font-weight:bold;" />
-</p>
+        <span id="fib-out">fib 0 = 1</span>
         <div style="padding: 10px"><div id="slider-range-min" style="width: 200px" class="slide"></div></div>
-
+</p>
 
         <script type="text/javascript">
-        // This is how we tell this page to 'connect' to path /example
             $(document).ready(function() {
-                $.kc.connect("/example");       // had /example
+                $.kc.connect("/example");
 
 		$( "#slider-range-min" ).slider({
 			range: "min",
 			value: 0,
 			min: 0,
 			max: 35
-//			slide: function( event, ui ) {
-//			        $( "#fib-out").html('&#171;&#8226;&#187;');
-//				$( "#amount" ).val( "$" + ui.value );
-//			}
 		});
-		$( "#amount" ).val( "$" + $( "#slider-range-min" ).slider( "value" ) );
             });
         </script>
     </body>
