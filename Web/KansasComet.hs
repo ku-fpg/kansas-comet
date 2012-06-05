@@ -121,7 +121,7 @@ connect opt callback = do
 kCometPlugin :: IO String
 kCometPlugin = do
         dataDir <- getDataDir
-        return $ dataDir ++ "/static/kansas-comet.js"
+        return $ dataDir ++ "/static/js/kansas-comet.js"
 
 -- 'send' sends a javascript fragement to a document.
 -- The string argument will be evaluated before sending (in case there is an error,

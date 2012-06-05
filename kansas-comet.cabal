@@ -16,7 +16,7 @@ Description:
   A transport level remote JavaScript RESTful push mechanism.
 
 data-files:
-    static/kansas-comet.js
+    static/js/kansas-comet.js
 
 Extra-source-files:
     README
