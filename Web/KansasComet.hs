@@ -55,7 +55,7 @@ connect opt callback = do
    post (capture $ prefix opt ++ "/") $ do
             liftIO $ print "got root"
             uq  <- liftIO $ newContext
-            text (T.pack $ "kansascomet_session = " ++ show uq ++ ";kansascomet_redraw(0);")
+            text (T.pack $ "$.kc.session(" ++ show uq ++ ");")
 
    -- GET the updates to the documents (should this be an (empty) POST?)
 
@@ -147,7 +147,7 @@ listen doc eventName = atomically $ do
 register :: Document -> EventName -> T.Text -> IO ()
 register doc eventName eventBuilder =
         send doc $ T.pack $ concat
-                        [ "kansascomet_register(" ++ show eventName ++ ",function(event,widget) {"
+                        [ "$.kc.register(" ++ show eventName ++ ",function(event,widget) {"
                         , T.unpack eventBuilder
                         , "});"
                         ]
@@ -156,7 +156,7 @@ waitFor :: Document -> EventName -> IO Value
 waitFor doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
         send doc $ T.pack $ concat
-                [ "kansascomet_waitFor(" ++ show eventName ++ ",function(e) { kansascomet_reply(" ++ show uq ++ ",e);});" ]
+                [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         getReply doc uq
 
 -- internal function, waits for a numbered reply
@@ -176,7 +176,7 @@ query :: Document -> T.Text -> IO Value
 query doc qText = do
         let uq = 37845 :: Int -- should be uniq
         send doc $ T.pack $ concat
-                [ "kansascomet_reply(" ++ show uq ++ ",function(){"
+                [ "$.kc.reply(" ++ show uq ++ ",function(){"
                 , T.unpack qText
                 , "}());"
                 ]
