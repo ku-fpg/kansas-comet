@@ -1,16 +1,13 @@
-var the_prefix = "";
-var kansascomet_session;
-var eventQueues = {};   // TODO: add the use of the queue
-var eventCallbacks = {};
-
-
+// Kansas Comet jQuery plugin
 (function($) {
-//    var the_prefix = "";
+   var the_prefix = "";
+   var kansascomet_session;
+   var eventQueues = {};   // TODO: add the use of the queue
+   var eventCallbacks = {};
 
    $.kc = {
 	connect: function(prefix) {
 		the_prefix = prefix;
-		alert("Ha");
     		$.ajax({ url: the_prefix,
               		type: "POST",
               		data: "",
@@ -37,8 +34,6 @@ var eventCallbacks = {};
         		e.eventname = eventname;
 			//      alert("EVENT " + e);
         		if (eventCallbacks[eventname] == undefined) {
-				//              alert('pushing, no one is waiting (TO BE DONE)');
-        			// These are effectively ignored (TODO: fix)
                 		eventQueues[eventname].push(e);
         		} else {
                 		eventCallbacks[eventname](e);
@@ -47,8 +42,11 @@ var eventCallbacks = {};
 	},
 	// This waits for an event. The second argument is the continuation
 	waitFor: function (eventname, fn) {
-   		// TODO: check to see if there is an event waiting
-   		if (eventCallbacks[eventname] == undefined) {
+		var e = eventQueues[eventname].shift();
+		if (e != undefined) {
+			// call with event from queue
+			fn(e);
+		} else if (eventCallbacks[eventname] == undefined) {
        			eventCallbacks[eventname] = function (e) {
           			// delete the callback
           			delete eventCallbacks[eventname];
