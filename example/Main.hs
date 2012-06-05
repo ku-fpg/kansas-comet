@@ -80,26 +80,6 @@ web_app doc = do
                          send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
                   Click _ x y -> do
                           print ("#########################",x,y)
-{-
-                print (res :: Value)
-                let Success (Slide _ n) :: Result Event = parse parseJSON res
-                print n
-                --                res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
-
-{-
-                let Success (Wrapped a) :: Result (Wrapped String) = parse parseJSON res
-                print a
-                case reads a of
-                  [(v :: Int,"")] -> do
-                        send doc (Text.pack $ "$('#fib-out').html('&#171;&#8226;&#187;')")
-                        send doc (Text.pack $ "$('#fib-out').text('" ++ show (fib v) ++ "')")
-                  _ ->  send doc (Text.pack $ "$('#fib-out').text('...')")
--}
-
---                let Success b :: Result String = parse parseJSON a
---                print b
---                print res
--}
         return ()
 
 fib n = if n < 2 then 1 else fib (n-1) + fib (n-2)
