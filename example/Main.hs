@@ -10,7 +10,7 @@ import Web.Scotty
 import Web.KansasComet as KC
 import Data.Default
 import Control.Monad
-import qualified Control.Applicative as App
+import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad.IO.Class
@@ -73,13 +73,19 @@ web_app doc = do
 
 
         forkIO $ forever $ do
-                res <- waitFor doc "slide"
-                print res
-                let Success (Slide _ n) :: Result Slide = parse parseJSON res
+                Just res <- waitFor doc ["slide","click"]
+                case res of
+                  Slide _ n -> do
+                         send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
+                         send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
+                  Click _ x y -> do
+                          print ("#########################",x,y)
+{-
+                print (res :: Value)
+                let Success (Slide _ n) :: Result Event = parse parseJSON res
                 print n
                 --                res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
-                send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
-                send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
+
 {-
                 let Success (Wrapped a) :: Result (Wrapped String) = parse parseJSON res
                 print a
@@ -93,23 +99,31 @@ web_app doc = do
 --                let Success b :: Result String = parse parseJSON a
 --                print b
 --                print res
+-}
         return ()
 
 fib n = if n < 2 then 1 else fib (n-1) + fib (n-2)
 
-data Slide = Slide String Int
-        deriving Show
+data Event = Slide String Int
+           | Click String Int Int
 
-instance FromJSON Slide where
-   parseJSON (Object v) = Slide App.<$> (v .: "id") App.<*> (v .: "count")
+
+instance FromJSON Event where
+   parseJSON (Object v) =
+         (Slide <$> (v .: "id") <*> (v .: "count"))
+     <|> (Click <$> (v .: "id") <*> (v .: "pageX") <*> (v .: "pageY"))
    parseJSON _          = mzero
 
+{- How to get a 'wrapper result'
+
+res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
 
 data Wrapped a = Wrapped a
         deriving Show
 
 instance FromJSON a => FromJSON (Wrapped a) where
-   parseJSON (Object v) = Wrapped    App.<$>
+   parseJSON (Object v) = Wrapped    <$>
                           (v .: "wrapped")
    parseJSON _          = mzero
 
+-}

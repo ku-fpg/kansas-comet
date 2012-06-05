@@ -40,22 +40,32 @@
         		}
      		});
 	},
-	// This waits for an event. The second argument is the continuation
-	waitFor: function (eventname, fn) {
-		var e = eventQueues[eventname].shift();
-		if (e != undefined) {
-			// call with event from queue
-			fn(e);
-		} else if (eventCallbacks[eventname] == undefined) {
-       			eventCallbacks[eventname] = function (e) {
-          			// delete the callback
-          			delete eventCallbacks[eventname];
+	// This waits for named event(s). The second argument is the continuation
+	waitFor: function (eventnames, fn) {
+		for (eventname in eventnames) {
+			var e = eventQueues[eventnames[eventname]].shift();
+			if (e != undefined) {
+				// call with event from queue
+				fn(e);
+				// and we are done
+				return;	
+			}
+			if (eventCallbacks[eventnames[eventname]] != undefined) {
+        			alert("ABORT: event queue callback failure for " + eventname);
+			}
+		}
+		// All the callback better be undefined
+		var f = function (e) {
+          			// delete all the waiting callback(s)
+				for (eventname in eventnames) {
+					 delete eventCallbacks[eventnames[eventname]];
+				}
           			// and do the callback
           			fn(e);
-       			}
-   		} else {
-        		alert("ABORT: reassigning the event queue callback");
-   		}
+		};
+		for (eventname in eventnames) {
+			 eventCallbacks[eventnames[eventname]] = f;
+		}
 	},
 	// There is a requirement that obj be an object or array.
 	// See RFC 4627 for details.

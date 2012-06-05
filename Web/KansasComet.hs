@@ -3,6 +3,7 @@ module Web.KansasComet where
 
 import Web.Scotty
 import Data.Aeson
+import Data.Aeson.Types
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
@@ -155,12 +156,15 @@ register doc eventName eventBuilder =
                         , "});"
                         ]
 
-waitFor :: Document -> EventName -> IO Value
+waitFor :: (FromJSON event) => Document -> [EventName] -> IO (Maybe event)
 waitFor doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
         send doc $ concat
                 [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
-        getReply doc uq
+        res <- getReply doc uq
+        case parse parseJSON res of
+           Success event -> return $ Just event
+           _             -> return $ Nothing     -- something went wrong
 
 -- internal function, waits for a numbered reply
 getReply :: Document -> Int -> IO Value
