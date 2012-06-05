@@ -150,7 +150,7 @@ listen doc eventName = atomically $ do
 register :: Document -> EventName -> String -> IO ()
 register doc eventName eventBuilder =
         send doc $ concat
-                        [ "$.kc.register(" ++ show eventName ++ ",function(event,widget) {"
+                        [ "$.kc.register(" ++ show eventName ++ ",function(widget,event,aux) {"
                         , eventBuilder
                         , "});"
                         ]

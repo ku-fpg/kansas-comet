@@ -67,7 +67,7 @@ web_app doc = do
 
         register doc "slide" $ concat
                 [ " return ({ id    : $(widget).attr('id')"
-                , "         , count  : $(widget).slider('value')"
+                , "         , count  : aux.value"
                 , "         });"
                 ]
 

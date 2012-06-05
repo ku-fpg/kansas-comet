@@ -31,8 +31,9 @@ var eventCallbacks = {};
 	// This says someone is listening on a specific event
 	register: function (eventname, fn) {
      		eventQueues[eventname] = [];
-     		$("body").on(eventname, "." + eventname, function (event) {
-        		var e = fn(event,this);
+     		$("body").on(eventname, "." + eventname, function (event,aux) {
+        		var e = fn(this,event,aux);
+//			$("#log").append('{e:' + eventname  + '+' + $(this).slider('value') + ',' + $.toJSON(ui) + '}');
         		e.eventname = eventname;
 			//      alert("EVENT " + e);
         		if (eventCallbacks[eventname] == undefined) {
