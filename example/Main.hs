@@ -24,11 +24,29 @@ main = do
                 -- This is scotty code
                 get "/" $ file $ "index.html"
                 sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
-                          | nm <- ["jquery.js","jquery-json.js"]
+                          | nm <- ["jquery.js","jquery-json.js"] ++ [
+
+                                "down/css/ui-lightness/images/ui-bg_diagonals-thick_18_b81900_40x40.png",
+                                "down/css/ui-lightness/images/ui-bg_diagonals-thick_20_666666_40x40.png",
+                                "down/css/ui-lightness/images/ui-bg_flat_10_000000_40x100.png",
+                                "down/css/ui-lightness/images/ui-bg_glass_100_f6f6f6_1x400.png",
+                                "down/css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png",
+                                "down/css/ui-lightness/images/ui-bg_glass_65_ffffff_1x400.png",
+                                "down/css/ui-lightness/images/ui-bg_gloss-wave_35_f6a828_500x100.png",
+                                "down/css/ui-lightness/images/ui-bg_highlight-soft_100_eeeeee_1x100.png",
+                                "down/css/ui-lightness/images/ui-bg_highlight-soft_75_ffe45c_1x100.png",
+                                "down/css/ui-lightness/images/ui-icons_222222_256x240.png",
+                                "down/css/ui-lightness/images/ui-icons_228ef1_256x240.png",
+                                "down/css/ui-lightness/images/ui-icons_ef8c08_256x240.png",
+                                "down/css/ui-lightness/images/ui-icons_ffd27a_256x240.png",
+                                "down/css/ui-lightness/images/ui-icons_ffffff_256x240.png"]
+
                           ]
                 kcomet <- liftIO kCometPlugin
                 get "/kansas-comet.js" $ file $ kcomet
-
+                get "/jquery-ui.js" $ file $ "./down/js/jquery-ui-1.8.20.custom.min.js"
+                get "/down/css/ui-lightness/jquery-ui-1.8.20.custom.css" $ file $
+                                "./down/css/ui-lightness/jquery-ui-1.8.20.custom.css"
                 -- connect /example to the following web_app
                 connect opts web_app
 
@@ -47,9 +65,24 @@ web_app doc = do
                 , "        };"
                 ]
 
+        print "BLA"
+
+        register doc "slide" $ Text.pack $ concat
+                [ " return ({ id    : $(widget).attr('id')"
+                , "         , count  : $(widget).slider('value')"
+                , "         });"
+                ]
+
+
         forkIO $ forever $ do
-                res <- waitFor doc "click"
-                res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
+                res <- waitFor doc "slide"
+                print res
+                let Success (Slide _ n) :: Result Slide = parse parseJSON res
+                print n
+                --                res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
+                send doc (Text.pack $ "$('#fib-out').html('&#171;&#8226;&#187;')")
+                send doc (Text.pack $ "$('#fib-out').text('" ++ show (fib n) ++ "')")
+{-
                 let Success (Wrapped a) :: Result (Wrapped String) = parse parseJSON res
                 print a
                 case reads a of
@@ -57,13 +90,22 @@ web_app doc = do
                         send doc (Text.pack $ "$('#fib-out').html('&#171;&#8226;&#187;')")
                         send doc (Text.pack $ "$('#fib-out').text('" ++ show (fib v) ++ "')")
                   _ ->  send doc (Text.pack $ "$('#fib-out').text('...')")
+-}
 
 --                let Success b :: Result String = parse parseJSON a
 --                print b
-                print res
+--                print res
         return ()
 
 fib n = if n < 2 then 1 else fib (n-1) + fib (n-2)
+
+data Slide = Slide String Int
+        deriving Show
+
+instance FromJSON Slide where
+   parseJSON (Object v) = Slide App.<$> (v .: "id") App.<*> (v .: "count")
+   parseJSON _          = mzero
+
 
 data Wrapped a = Wrapped a
         deriving Show
