@@ -49,31 +49,17 @@ main = do
                 connect opts web_app
 
 opts :: KC.Options
-opts = def { prefix = "/example", verbose = 2 }
+opts = def { prefix = "/example", verbose = 0 }
 
 -- This is run each time the page is first accessed
 web_app :: Document -> IO ()
 web_app doc = do
         print "web_app"
 
-        register doc "click" $ concat
-                [ " return { pageX : event.pageX"
-                , "        , pageY : event.pageY"
-                , "        , id    : $(widget).attr('id')"
-                , "        };"
-                ]
-
-        print "BLA"
-
-        register doc "slide" $ concat
-                [ " return ({ id    : $(widget).attr('id')"
-                , "         , count  : aux.value"
-                , "         });"
-                ]
-
+        registerEvents doc events
 
         let control model = do
-                Just res <- waitFor doc ["slide","click"]
+                Just res <- waitForEvent doc ["slide","click"]
                 case res of
                   Slide _ n                      -> view n
                   Click "up"    _ _ | model < 25 -> view (model + 1)
@@ -101,9 +87,12 @@ data Event = Slide String Int
     deriving (Show)
 
 events :: [(String,[(String,String)])]
-events = [( "click", [ ("pageX",        "event.pageX")
+events = [( "click", [ ("id",           "$(widget).attr('id')")
+                     , ("pageX",        "event.pageX")
                      , ("pageY",        "event.pageY")
-                     , ("id",           "$(widget).attr('id')")
+                     ])
+         ,( "slide", [ ("id",           "$(widget).attr('id')")
+                     , ("count",        "aux.value")
                      ])
          ]
 
@@ -116,16 +105,3 @@ instance FromJSON Event where
                 <*> (v .: "pageY"))
    parseJSON _          = mzero
 
-{- How to get a 'wrapper result'
-
-res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
-
-data Wrapped a = Wrapped a
-        deriving Show
-
-instance FromJSON a => FromJSON (Wrapped a) where
-   parseJSON (Object v) = Wrapped    <$>
-                          (v .: "wrapped")
-   parseJSON _          = mzero
-
--}

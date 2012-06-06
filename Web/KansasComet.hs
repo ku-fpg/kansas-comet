@@ -11,7 +11,9 @@ import Control.Monad.IO.Class
 import Paths_kansas_comet
 import qualified Data.Map as Map
 import Control.Concurrent
+import Control.Applicative
 import Data.Default
+import Data.List
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
@@ -132,22 +134,7 @@ kCometPlugin = do
 send :: Document -> String -> IO ()
 send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 
-{-
--- | listen sets up a RESTful listener and a new Channel that listens
--- to this listener. It is important to realize that if you call listen twice,
--- you get the *same* channel.
-listen :: Document -> EventName -> IO (TChan Value)
-listen doc eventName = atomically $ do
-        db <- readTVar (listening doc)
-        case Map.lookup eventName db of
-          Just ch -> return ch
-          Nothing -> do
-             ch <- newTChan
-             writeTVar (listening doc) $ Map.insert eventName ch db
-             return ch
--}
-
--- The Text argument returns an object, which is what part of the event get sent to Haskell.
+-- The String argument returns an object, which is what part of the event get sent to Haskell.
 register :: Document -> EventName -> String -> IO ()
 register doc eventName eventBuilder =
         send doc $ concat
@@ -156,8 +143,11 @@ register doc eventName eventBuilder =
                         , "});"
                         ]
 
-waitFor :: (FromJSON event) => Document -> [EventName] -> IO (Maybe event)
-waitFor doc eventName = do
+registerEvents :: Document -> [(EventName,Record)] -> IO ()
+registerEvents doc xs = sequence_ [ register doc nm (record fields) | (nm,fields) <- xs ]
+
+waitForEvent :: (FromJSON event) => Document -> [EventName] -> IO (Maybe event)
+waitForEvent doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
         send doc $ concat
                 [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
@@ -210,5 +200,25 @@ instance Default Options where
         { prefix = ""                   -- default to root, this assumes single page, etc.
         , verbose = 1
         }
+
+
+-- | Structure of a Record for showing
+type Record = [(String,String)]
+
+-- | Builds a statement that returns a record of named fields.
+record :: Record -> String
+record xs = "return { " ++ concat (intersperse " , " [ tag ++ " : " ++ expr | (tag,expr) <- xs ]) ++ " };"
+
+{-
+res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
+-}
+
+data Wrapped a = Wrapped a
+        deriving Show
+
+instance FromJSON a => FromJSON (Wrapped a) where
+   parseJSON (Object v) = Wrapped    <$>
+                          (v .: "wrapped")
+   parseJSON _          = mzero
 
 
