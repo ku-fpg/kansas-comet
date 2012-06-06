@@ -9,24 +9,43 @@
     </head>
     <body>
 
-<p>
-        <div style="padding: 10px">
-                <span id="fib-out" style="border: 5px" class="click">fib 0 = 1</span>
-                <div id="slider-range-min" style="width: 200px" class="slide"></div>
-        </div>
+
+<table border="0" style="border: 1px solid black">
+  <tr>
+    <td align="center">
+      <button id="reset" class="click">Reset</button>
+      <button id="down" class="click">-1</button>
+      <button width="" id="up" class="click">+1</button>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding: 10px">
+      <span id="fib-out" style="border: 5px; font-size: x-large" class="click">fib 0 = 1</span>
+    </td>
+  </tr>        
+  <tr>
+    <td align="center" style="padding: 10px">
+      <div id="slider" style="width: 200px" class="slide"></div>        
+    </td>
+  </tr>        
+</table>
+
+
 
         <div id="log"></div>
-</p>
+
 
         <script type="text/javascript">
             $(document).ready(function() {
                 $.kc.connect("/example");
 
-		$( "#slider-range-min" ).slider({
+                $("button").button();
+
+		$( "#slider" ).slider({
 			range: "min",
 			value: 0,
 			min: 0,
-			max: 35
+			max: 25
 		});
             });
         </script>

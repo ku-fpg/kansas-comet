@@ -72,26 +72,48 @@ web_app doc = do
                 ]
 
 
-        forkIO $ forever $ do
+        let control model = do
                 Just res <- waitFor doc ["slide","click"]
                 case res of
-                  Slide _ n -> do
-                         send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
-                         send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
-                  Click _ x y -> do
-                          print ("#########################",x,y)
+                  Slide _ n                      -> view n
+                  Click "up"    _ _ | model < 25 -> view (model + 1)
+                  Click "down"  _ _ | model > 0  -> view (model - 1)
+                  Click "reset" _ _              -> view 0
+                  _ -> control model
+
+            view model = do
+                let n = model
+                send doc ("$('#slider').slider('value'," ++ show n ++ ");")
+                send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
+                send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
+
+                control model
+
+
+        forkIO $ control 0
+
         return ()
 
 fib n = if n < 2 then 1 else fib (n-1) + fib (n-2)
 
 data Event = Slide String Int
            | Click String Int Int
+    deriving (Show)
 
+events :: [(String,[(String,String)])]
+events = [( "click", [ ("pageX",        "event.pageX")
+                     , ("pageY",        "event.pageY")
+                     , ("id",           "$(widget).attr('id')")
+                     ])
+         ]
 
 instance FromJSON Event where
    parseJSON (Object v) =
-         (Slide <$> (v .: "id") <*> (v .: "count"))
-     <|> (Click <$> (v .: "id") <*> (v .: "pageX") <*> (v .: "pageY"))
+         (Slide <$> (v .: "id")
+                <*> (v .: "count"))
+     <|> (Click <$> (v .: "id")
+                <*> (v .: "pageX")
+                <*> (v .: "pageY"))
    parseJSON _          = mzero
 
 {- How to get a 'wrapper result'
