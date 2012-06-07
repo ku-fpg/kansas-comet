@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
 module Web.KansasComet where
 
-import Web.Scotty
+import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
 import Data.Aeson
 import Data.Aeson.Types
 import Control.Monad
@@ -143,9 +143,6 @@ register doc eventName eventBuilder =
                         , "});"
                         ]
 
-registerEvents :: Document -> [(EventName,Record)] -> IO ()
-registerEvents doc xs = sequence_ [ register doc nm (record fields) | (nm,fields) <- xs ]
-
 waitForEvent :: (FromJSON event) => Document -> [EventName] -> IO (Maybe event)
 waitForEvent doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
@@ -220,5 +217,48 @@ instance FromJSON a => FromJSON (Wrapped a) where
    parseJSON (Object v) = Wrapped    <$>
                           (v .: "wrapped")
    parseJSON _          = mzero
+
+data Field a = String := String
+
+--field :: String -> String -> Field a
+--field = Field
+
+event :: String -> a -> Template a
+event = Pure
+
+(<&>) :: (FromJSON a) => Template (a -> b) -> Field a -> Template b
+(<&>) = App
+
+data Template :: * -> * where
+        App :: FromJSON a => Template (a -> b) -> Field a -> Template b
+        Pure :: String -> a                               -> Template a
+
+infixl 1 <&>
+
+class Eventable e where
+        events :: [Template e]
+
+newtype EventWrapper a = EventWrapper a
+
+instance Eventable e => FromJSON (EventWrapper e) where
+   parseJSON (Object v) = EventWrapper
+                       <$> foldr (<|>) empty (map (parserFromJSON v) events)
+   parseJSON _          = mzero
+
+parserFromJSON :: Object -> Template a -> Parser a
+parserFromJSON _ (Pure _ a)           = pure a
+parserFromJSON v (p `App` (nm := _)) = parserFromJSON v p <*> (v .: T.pack nm)
+
+data Witness a = Witness
+
+registerEvents :: forall e . (Eventable e) => Document -> Witness e -> IO ()
+registerEvents doc Witness
+        = sequence_ [ let (nm,fields) = extract t []
+                      in register doc nm (record fields)
+                    | t <- events :: [Template e]
+                    ]
+   where extract :: Template a -> [(String,String)] -> (String,[(String,String)])
+         extract (Pure nm _) xs            = (nm,xs)
+         extract (t `App` (nm := expr)) xs = extract t ((nm,expr) : xs)
 
 

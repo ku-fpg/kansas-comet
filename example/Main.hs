@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
 
 -- Example of using Kansas Comet
 
@@ -6,9 +6,11 @@ module Main where
 
 import Data.Aeson as A
 import Data.Aeson.Types as AP
-import Web.Scotty
+import qualified Web.Scotty as Scotty
+import Web.Scotty (scottyOpts, get, file, literal)
 import Web.KansasComet as KC
 import Data.Default
+import Data.Map (Map)
 import Control.Monad
 import Control.Applicative
 import Control.Concurrent
@@ -20,10 +22,12 @@ import qualified Data.Text      as T
 
 main = do
         -- build the scotty dispatch app
-        scotty 3000 $ do
+        scottyOpts (def { Scotty.verbose = 0 })  $ do
                 -- provide some static pages, include jquery
                 -- This is scotty code
                 get "/" $ file $ "index.html"
+
+
                 sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
                           | nm <- ["js/jquery.js","js/jquery-json.js","js/jquery-ui.js"] ++ [
                                 "css/ui-lightness/jquery-ui.css",
@@ -56,7 +60,7 @@ web_app :: Document -> IO ()
 web_app doc = do
         print "web_app"
 
-        registerEvents doc events
+        registerEvents doc (Witness :: Witness Event)
 
         let control model = do
                 Just res <- waitForEvent doc ["slide","click"]
@@ -86,8 +90,8 @@ data Event = Slide String Int
            | Click String Int Int
     deriving (Show)
 
-events :: [(String,[(String,String)])]
-events = [( "click", [ ("id",           "$(widget).attr('id')")
+events' :: [(String,[(String,String)])]
+events' = [( "click", [ ("id",           "$(widget).attr('id')")
                      , ("pageX",        "event.pageX")
                      , ("pageY",        "event.pageY")
                      ])
@@ -95,6 +99,18 @@ events = [( "click", [ ("id",           "$(widget).attr('id')")
                      , ("count",        "aux.value")
                      ])
          ]
+
+
+instance Eventable Event where
+       events = [ event "slide" Slide
+                    <&> "id"      := "$(widget).attr('id')"
+                    <&> "count"   := "aux.value"
+                , event "click" Click
+                    <&> "id"      := "$(widget).attr('id')"
+                    <&> "pageX"   :=  "event.pageX"
+                    <&> "pageY"   :=  "event.pageY"
+                ]
+
 
 instance FromJSON Event where
    parseJSON (Object v) =
