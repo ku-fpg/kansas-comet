@@ -111,13 +111,3 @@ instance Eventable Event where
                     <&> "pageY"   :=  "event.pageY"
                 ]
 
-
-instance FromJSON Event where
-   parseJSON (Object v) =
-         (Slide <$> (v .: "id")
-                <*> (v .: "count"))
-     <|> (Click <$> (v .: "id")
-                <*> (v .: "pageX")
-                <*> (v .: "pageY"))
-   parseJSON _          = mzero
-

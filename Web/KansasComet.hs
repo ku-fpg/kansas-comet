@@ -143,15 +143,15 @@ register doc eventName eventBuilder =
                         , "});"
                         ]
 
-waitForEvent :: (FromJSON event) => Document -> [EventName] -> IO (Maybe event)
+waitForEvent :: (Eventable event) => Document -> [EventName] -> IO (Maybe event)
 waitForEvent doc eventName = do
         let uq = 1023949 :: Int -- later, have this random generated
         send doc $ concat
                 [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         res <- getReply doc uq
         case parse parseJSON res of
-           Success event -> return $ Just event
-           _             -> return $ Nothing     -- something went wrong
+           Success (EventWrapper event) -> return $ Just event
+           _                            -> return $ Nothing     -- something went wrong
 
 -- internal function, waits for a numbered reply
 getReply :: Document -> Int -> IO Value
@@ -246,7 +246,7 @@ instance Eventable e => FromJSON (EventWrapper e) where
    parseJSON _          = mzero
 
 parserFromJSON :: Object -> Template a -> Parser a
-parserFromJSON _ (Pure _ a)           = pure a
+parserFromJSON _ (Pure _ a)          = pure a
 parserFromJSON v (p `App` (nm := _)) = parserFromJSON v p <*> (v .: T.pack nm)
 
 data Witness a = Witness
