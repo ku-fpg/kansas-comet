@@ -28,7 +28,6 @@ main = do
                 -- This is scotty code
                 get "/" $ file $ "index.html"
 
-
                 sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
                           | nm <- ["js/jquery.js","js/jquery-json.js","js/jquery-ui.js"] ++ [
                                 "css/ui-lightness/jquery-ui.css",
@@ -74,8 +73,11 @@ web_app doc = do
 
             view model = do
                 let n = model
-                send doc ("$('#slider').slider('value'," ++ show n ++ ");")
-                send doc ("$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')")
+                send doc $ concat
+                        [ "$('#slider').slider('value'," ++ show n ++ ");"
+                        , "$('#fib-out').html('fib " ++ show n ++ " = " ++ "&#171;&#8226;&#187;')"
+                        ]
+                -- sent a 2nd packet, because it will take time to compute fib
                 send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
 
                 control model
@@ -91,34 +93,15 @@ data Event = Slide String Int
            | Click String Int Int
     deriving (Show)
 
-events' :: [(String,[(String,String)])]
-events' = [( "click", [ ("id",           "$(widget).attr('id')")
-                     , ("pageX",        "event.pageX")
-                     , ("pageY",        "event.pageY")
-                     ])
-         ,( "slide", [ ("id",           "$(widget).attr('id')")
-                     , ("count",        "aux.value")
-                     ])
-         ]
-
 
 slide = event "slide" Slide
             <&> "id"      := "$(widget).attr('id')"
             <&> "count"   := "aux.value"
 
 click = event "click" Click
-                    <&> "id"      := "$(widget).attr('id')"
-                    <&> "pageX"   :=  "event.pageX"
-                    <&> "pageY"   :=  "event.pageY"
+            <&> "id"      := "$(widget).attr('id')"
+            <&> "pageX"   :=  "event.pageX"
+            <&> "pageY"   :=  "event.pageY"
 
-instance Eventable Event where
-       events = [ slide, click ]
-
-
---data Match :: * where
---   Match :: Schema a -> (a -> k) -> Match k
-
---waitForEvent :: [Match e r] -> IO r
-
-
+events = slide <> click
 
