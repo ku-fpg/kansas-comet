@@ -266,7 +266,10 @@ instance Eventable e => FromJSON (EventWrapper e) where
    parseJSON _          = mzero
 -}
 parserFromJSON :: Template a -> Value -> Parser a
-parserFromJSON (Pure _ a)          _            = pure a
+parserFromJSON (Pure nm a)         o@(Object v) = do
+        nm' <- (v .: T.pack "eventname")        -- house rule; *always* has an eventname
+        if nm == nm' then pure a
+                     else mzero
 parserFromJSON (p `App` (nm := _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
 parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parserFromJSON t2 o
 parserFromJSON Empty               _            = mzero
