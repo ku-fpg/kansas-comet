@@ -14,6 +14,7 @@ import Control.Concurrent
 import Control.Applicative
 import Data.Default
 import Data.List
+import Data.Monoid
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
@@ -143,15 +144,16 @@ register doc eventName eventBuilder =
                         , "});"
                         ]
 
-waitForEvent :: (Eventable event) => Document -> [EventName] -> IO (Maybe event)
-waitForEvent doc eventName = do
+waitForEvent :: Document -> (Template event) -> IO (Maybe event)
+waitForEvent doc tmpl = do
         let uq = 1023949 :: Int -- later, have this random generated
+        let eventNames = map fst $ extract tmpl
         send doc $ concat
-                [ "$.kc.waitFor(" ++ show eventName ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
+                [ "$.kc.waitFor(" ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         res <- getReply doc uq
-        case parse parseJSON res of
-           Success (EventWrapper event) -> return $ Just event
-           _                            -> return $ Nothing     -- something went wrong
+        case parse (parserFromJSON tmpl) res of
+           Success event -> return $ Just event
+           _             -> return $ Nothing     -- something went wrong
 
 -- internal function, waits for a numbered reply
 getReply :: Document -> Int -> IO Value
@@ -229,9 +231,26 @@ event = Pure
 (<&>) :: (FromJSON a) => Template (a -> b) -> Field a -> Template b
 (<&>) = App
 
+-- TODO: Schema
 data Template :: * -> * where
         App :: FromJSON a => Template (a -> b) -> Field a -> Template b
         Pure :: String -> a                               -> Template a
+        Append :: Template a -> Template a                  -> Template a
+        Empty ::                                        Template a
+
+instance Monoid (Template a) where
+        mappend = Append
+        mempty  = Empty
+
+
+instance Functor Template where
+        fmap f (App t fld)    = App (fmap (fmap f) t) fld
+        fmap f (Pure nm a)    = Pure nm (f a)
+        fmap f (Append t1 t2) = Append (fmap f t1) (fmap f t2)
+        fmap f Empty = Empty
+
+alt :: Template a -> Template b -> Template (Either a b)
+alt t1 t2 = fmap Left t1 <> fmap Right t2
 
 infixl 1 <&>
 
@@ -240,25 +259,32 @@ class Eventable e where
 
 newtype EventWrapper a = EventWrapper a
 
+{-
 instance Eventable e => FromJSON (EventWrapper e) where
    parseJSON (Object v) = EventWrapper
                        <$> foldr (<|>) empty (map (parserFromJSON v) events)
    parseJSON _          = mzero
-
-parserFromJSON :: Object -> Template a -> Parser a
-parserFromJSON _ (Pure _ a)          = pure a
-parserFromJSON v (p `App` (nm := _)) = parserFromJSON v p <*> (v .: T.pack nm)
+-}
+parserFromJSON :: Template a -> Value -> Parser a
+parserFromJSON (Pure _ a)          _            = pure a
+parserFromJSON (p `App` (nm := _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
+parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parserFromJSON t2 o
+parserFromJSON Empty               _            = mzero
+parserFromJSON _                   _            = mzero
 
 data Witness a = Witness
 
-registerEvents :: forall e . (Eventable e) => Document -> Witness e -> IO ()
-registerEvents doc Witness
-        = sequence_ [ let (nm,fields) = extract t []
-                      in register doc nm (record fields)
-                    | t <- events :: [Template e]
+registerEvents :: Document -> Template event -> IO ()
+registerEvents doc tmpls
+        = sequence_ [ register doc nm (record fields)
+                    | (nm,fields) <- extract tmpls
                     ]
-   where extract :: Template a -> [(String,String)] -> (String,[(String,String)])
-         extract (Pure nm _) xs            = (nm,xs)
-         extract (t `App` (nm := expr)) xs = extract t ((nm,expr) : xs)
 
-
+extract :: Template a -> [(String, [(String, String)])]
+extract tmpl = go tmpl []
+  where
+          go :: Template a -> [(String,String)] -> [(String, [(String, String)])]
+          go (Pure nm _) xs            = [(nm,xs)]
+          go (t `App` (nm := expr)) xs = go t ((nm,expr) : xs)
+          go (Append t1 t2)         xs = go t1 xs ++ go t2 xs
+          go (Empty)                xs = []

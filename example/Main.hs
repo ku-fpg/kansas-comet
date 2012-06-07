@@ -15,6 +15,7 @@ import Control.Monad
 import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM
+import Data.Monoid
 import Control.Monad.IO.Class
 
 import qualified Data.Text.Lazy as LT
@@ -60,10 +61,10 @@ web_app :: Document -> IO ()
 web_app doc = do
         print "web_app"
 
-        registerEvents doc (Witness :: Witness Event)
+        registerEvents doc (slide <> click)
 
         let control model = do
-                Just res <- waitForEvent doc ["slide","click"]
+                Just res <- waitForEvent doc (slide <> click)
                 case res of
                   Slide _ n                      -> view n
                   Click "up"    _ _ | model < 25 -> view (model + 1)
@@ -101,13 +102,23 @@ events' = [( "click", [ ("id",           "$(widget).attr('id')")
          ]
 
 
-instance Eventable Event where
-       events = [ event "slide" Slide
-                    <&> "id"      := "$(widget).attr('id')"
-                    <&> "count"   := "aux.value"
-                , event "click" Click
+slide = event "slide" Slide
+            <&> "id"      := "$(widget).attr('id')"
+            <&> "count"   := "aux.value"
+
+click = event "click" Click
                     <&> "id"      := "$(widget).attr('id')"
                     <&> "pageX"   :=  "event.pageX"
                     <&> "pageY"   :=  "event.pageY"
-                ]
+
+instance Eventable Event where
+       events = [ slide, click ]
+
+
+--data Match :: * where
+--   Match :: Schema a -> (a -> k) -> Match k
+
+--waitForEvent :: [Match e r] -> IO r
+
+
 
