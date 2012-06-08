@@ -1,6 +1,6 @@
-Name:                kansas-comet
+Name:                komet
 Version:             0.1
-Synopsis:            A javascript push mechanism and event listener
+Synopsis:            A javascript push mechanism and event listener support
 Homepage:            https://github.com/kufpg/kansas-comet/
 Bug-reports:         https://github.com/kufpg/kansas-comet/
 License:             BSD3
