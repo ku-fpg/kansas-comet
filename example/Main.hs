@@ -7,16 +7,19 @@ module Main where
 import Data.Aeson as A
 import Data.Aeson.Types as AP
 import qualified Web.Scotty as Scotty
-import Web.Scotty (scottyOpts, get, file, literal)
+import Web.Scotty (scottyOpts, get, file, literal, middleware)
 import Web.KansasComet as KC
 import Data.Default
 import Data.Map (Map)
 import Control.Monad
-import Control.Applicative
+--import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM
 import Data.Monoid
+import Data.List as L
 import Control.Monad.IO.Class
+import Network.Wai.Middleware.Static
+-- import Network.Wai      -- TMP for debug
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
@@ -26,27 +29,14 @@ main = do
         scottyOpts (def { Scotty.verbose = 0 })  $ do
                 -- provide some static pages, include jquery
                 -- This is scotty code
-                get "/" $ file $ "index.html"
 
-                sequence_ [ get (literal ("/" ++ nm)) $ file $  nm
-                          | nm <- ["js/jquery.js","js/jquery-json.js","js/jquery-ui.js"] ++ [
-                                "css/ui-lightness/jquery-ui.css",
-                                "css/ui-lightness/images/ui-bg_diagonals-thick_18_b81900_40x40.png",
-                                "css/ui-lightness/images/ui-bg_diagonals-thick_20_666666_40x40.png",
-                                "css/ui-lightness/images/ui-bg_flat_10_000000_40x100.png",
-                                "css/ui-lightness/images/ui-bg_glass_100_f6f6f6_1x400.png",
-                                "css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png",
-                                "css/ui-lightness/images/ui-bg_glass_65_ffffff_1x400.png",
-                                "css/ui-lightness/images/ui-bg_gloss-wave_35_f6a828_500x100.png",
-                                "css/ui-lightness/images/ui-bg_highlight-soft_100_eeeeee_1x100.png",
-                                "css/ui-lightness/images/ui-bg_highlight-soft_75_ffe45c_1x100.png",
-                                "css/ui-lightness/images/ui-icons_222222_256x240.png",
-                                "css/ui-lightness/images/ui-icons_228ef1_256x240.png",
-                                "css/ui-lightness/images/ui-icons_ef8c08_256x240.png",
-                                "css/ui-lightness/images/ui-icons_ffd27a_256x240.png",
-                                "css/ui-lightness/images/ui-icons_ffffff_256x240.png"]
+                let hasPrefix pre x = if pre`isPrefixOf` x then return x else Nothing
 
-                          ]
+                let policy =  only [("","index.html")]
+                          <|> ((hasPrefix "css/" <|> hasPrefix "js/") >-> addBase ".")
+
+                middleware $ staticPolicy $ policy
+
                 kcomet <- liftIO kCometPlugin
                 get "/js/kansas-comet.js" $ file $ kcomet
                 -- connect /example to the following web_app
