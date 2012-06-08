@@ -32,14 +32,15 @@ main = do
 
                 let hasPrefix pre x = if pre`isPrefixOf` x then return x else Nothing
 
-                let policy =  only [("","index.html")]
+                kcomet <- liftIO kCometPlugin
+
+                let policy =  only [ ("","index.html")
+                                   , ("js/kansas-comet.js",kcomet)
+                                   ]
                           <|> ((hasPrefix "css/" <|> hasPrefix "js/") >-> addBase ".")
 
                 middleware $ staticPolicy $ policy
 
-                kcomet <- liftIO kCometPlugin
-                get "/js/kansas-comet.js" $ file $ kcomet
-                -- connect /example to the following web_app
                 connect opts web_app
 
 opts :: KC.Options
