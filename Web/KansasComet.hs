@@ -136,20 +136,20 @@ send :: Document -> String -> IO ()
 send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 
 -- The String argument returns an object, which is what part of the event get sent to Haskell.
-register :: Document -> EventName -> String -> IO ()
-register doc eventName eventBuilder =
+register :: Document -> Scope -> EventName -> String -> IO ()
+register doc scope eventName eventBuilder =
         send doc $ concat
-                        [ "$.kc.register(" ++ show eventName ++ ",function(widget,event,aux) {"
+                        [ "$.kc.register(" ++ show scope ++ "," ++ show eventName ++ ",function(widget,event,aux) {"
                         , eventBuilder
                         , "});"
                         ]
 
-waitForEvent :: Document -> (Template event) -> IO (Maybe event)
-waitForEvent doc tmpl = do
+waitForEvent :: Document -> Scope -> Template event -> IO (Maybe event)
+waitForEvent doc scope tmpl = do
         let uq = 1023949 :: Int -- later, have this random generated
         let eventNames = map fst $ extract tmpl
         send doc $ concat
-                [ "$.kc.waitFor(" ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
+                [ "$.kc.waitFor(" ++ show scope ++ "," ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         res <- getReply doc uq
         case parse (parserFromJSON tmpl) res of
            Success event -> return $ Just event
@@ -180,6 +180,8 @@ query doc qText = do
 
 
 type EventName = String
+
+type Scope = String
 
 data Document = Document
         { sending   :: TMVar T.Text             -- ^ Code to be sent to the browser
@@ -277,11 +279,13 @@ parserFromJSON _                   _            = mzero
 
 data Witness a = Witness
 
-registerEvents :: Document -> Template event -> IO ()
-registerEvents doc tmpls
-        = sequence_ [ register doc nm (record fields)
+registerEvents :: Document -> Scope -> Template event -> IO ()
+registerEvents doc scope tmpls
+        = sequence_ [ register doc scope nm (record fields)
                     | (nm,fields) <- extract tmpls
                     ]
+
+-- TODO: extract => extractEventNames
 
 extract :: Template a -> [(String, [(String, String)])]
 extract tmpl = go tmpl []

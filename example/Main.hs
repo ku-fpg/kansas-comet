@@ -51,10 +51,10 @@ web_app :: Document -> IO ()
 web_app doc = do
         print "web_app"
 
-        registerEvents doc (slide <> click)
+        registerEvents doc "body" (slide <> click)
 
         let control model = do
-                Just res <- waitForEvent doc (slide <> click)
+                Just res <- waitForEvent doc "body" (slide <> click)
                 case res of
                   Slide _ n                      -> view n
                   Click "up"    _ _ | model < 25 -> view (model + 1)

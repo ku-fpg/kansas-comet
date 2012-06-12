@@ -26,31 +26,40 @@
             	// TODO: Add failure; could happen
         },
 	// This says someone is listening on a specific event
-	register: function (eventname, fn) {
-     		eventQueues[eventname] = [];
-     		$("body").on(eventname, "." + eventname, function (event,aux) {
+	// The full event name is "scope/eventname", for example
+	// "body/click"
+	register: function (scope, eventname, fn) {
+		var fulleventname = scope + "/" + eventname;
+     		eventQueues[fulleventname] = [];
+     		$(scope).on(eventname, "." + eventname, function (event,aux) {
         		var e = fn(this,event,aux);
 //			$("#log").append('{e:' + eventname  + '+' + $(this).slider('value') + ',' + $.toJSON(ui) + '}');
         		e.eventname = eventname;
 			//      alert("EVENT " + e);
-        		if (eventCallbacks[eventname] == undefined) {
-                		eventQueues[eventname].push(e);
-        		} else {
-                		eventCallbacks[eventname](e);
-        		}
+			$.kc.send(fulleventname,e);
      		});
 	},
-	// This waits for named event(s). The second argument is the continuation
-	waitFor: function (eventnames, fn) {
+
+	send: function (fulleventname, event) {
+		if (eventCallbacks[fulleventname] == undefined) {
+                	eventQueues[fulleventname].push(event);
+        	} else {
+                	eventCallbacks[fulleventname](event);
+        	}
+	},
+	
+	// This waits for (full) named event(s). The second argument is the continuation
+	waitFor: function (scope, eventnames, fn) {
+		var prefixScope = function(o) { return scope + "/" + o; }
 		for (eventname in eventnames) {
-			var e = eventQueues[eventnames[eventname]].shift();
+			var e = eventQueues[prefixScope(eventnames[eventname])].shift();
 			if (e != undefined) {
 				// call with event from queue
 				fn(e);
 				// and we are done
 				return;	
 			}
-			if (eventCallbacks[eventnames[eventname]] != undefined) {
+			if (eventCallbacks[prefixScope(eventnames[eventname])] != undefined) {
         			alert("ABORT: event queue callback failure for " + eventname);
 			}
 		}
@@ -58,13 +67,13 @@
 		var f = function (e) {
           			// delete all the waiting callback(s)
 				for (eventname in eventnames) {
-					 delete eventCallbacks[eventnames[eventname]];
+					 delete eventCallbacks[prefixScope(eventnames[eventname])];
 				}
           			// and do the callback
           			fn(e);
 		};
 		for (eventname in eventnames) {
-			 eventCallbacks[eventnames[eventname]] = f;
+			 eventCallbacks[prefixScope(eventnames[eventname])] = f;
 		}
 	},
 	// There is a requirement that obj be an object or array.
