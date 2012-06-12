@@ -19,5 +19,5 @@ run-kcomet-example-inplace: kcomet-example-inplace
 	export kansas_comet_datadir=.. ; ./kcomet-example-inplace
 
 ghci:
-	ghci Main.hs \
+	export kansas_comet_datadir=.. ; ghci Main.hs \
 		-i..:../dist/build/autogen/
