@@ -58,13 +58,13 @@ connect opt callback = do
 
    -- POST starts things off.
    post (capture $ prefix opt ++ "/") $ do
-            liftIO $ print "got root"
+--            liftIO $ print "got root"
             uq  <- liftIO $ newContext
             text (LT.pack $ "$.kc.session(" ++ show uq ++ ");")
 
    -- GET the updates to the documents (should this be an (empty) POST?)
 
-   liftIO $ print $ prefix opt ++ "/act/:id/:act"
+--   liftIO $ print $ prefix opt ++ "/act/:id/:act"
    get (capture $ prefix opt ++ "/act/:id/:act") $ do
             header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
             -- do something and return a new list of commands to the client
@@ -87,10 +87,10 @@ connect opt callback = do
 
                     case res of
                      Just js -> do
-                            liftIO $ putStrLn $ show js
+--                            liftIO $ putStrLn $ show js
                             text $ LT.pack $ T.unpack js
                      Nothing  ->
-                            -- give the browser something to do (approx every second)
+                            -- give the browser something to do (approx every 3 seconds)
                             text (LT.pack "")
 
             db <- liftIO $ atomically $ readTVar contextDB
@@ -109,7 +109,7 @@ connect opt callback = do
            db <- liftIO $ atomically $ readTVar contextDB
            case Map.lookup num db of
                Nothing  -> do
-                   liftIO $ print ("ignoring reply",uq,val)
+--                   liftIO $ print ("ignoring reply",uq,val)
                    text (LT.pack $ "alert('Ignore reply for session #" ++ show num ++ "');")
                Just doc -> do
                    liftIO $ do
