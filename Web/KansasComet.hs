@@ -1,9 +1,23 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
-module Web.KansasComet where
+module Web.KansasComet
+    ( connect
+    , extract
+    , event
+    , kCometPlugin
+    , register
+    , registerEvents
+    , send
+    , Document
+    , Options(..)
+    , Scope
+    , Template(..)
+    , (.=)
+    , (<&>)
+    ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
-import Data.Aeson
-import Data.Aeson.Types
+import Data.Aeson hiding ((.=))
+import Data.Aeson.Types hiding ((.=))
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
@@ -221,6 +235,9 @@ instance FromJSON a => FromJSON (Wrapped a) where
    parseJSON (Object v) = Wrapped    <$>
                           (v .: "wrapped")
    parseJSON _          = mzero
+
+(.=) :: String -> String -> Field a
+(.=) = (:=)
 
 data Field a = String := String
 
