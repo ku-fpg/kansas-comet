@@ -7,6 +7,7 @@ module Web.KansasComet
     , register
     , registerEvents
     , send
+    , waitForEvent
     , Document
     , Options(..)
     , Scope

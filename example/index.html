@@ -4,59 +4,22 @@
         <script type="text/javascript" src="js/jquery.js"></script>
         <script type="text/javascript" src="js/jquery-json.js"></script>
         <script type="text/javascript" src="js/kansas-comet.js"></script>
-        <link type="text/css" href="css/ui-lightness/jquery-ui.css" rel="Stylesheet" />	
+        <link type="text/css" href="css/ui-lightness/jquery-ui.css" rel="Stylesheet" />
         <script type="text/javascript" src="js/jquery-ui.js"></script>
     </head>
     <body>
 
-
-<div id="tabs">
-	<ul>
-		<li><a href="#tabs-1">Fibonacci</a></li>
-		<li><a href="#tabs-2">Proin dolor</a></li>
-		<li><a href="#tabs-3">Aenean lacinia</a></li>
-	</ul>
-	<div id="tabs-1">
-<table border="0" style="border: 1px solid black" class="ui-corner-all">
-  <tr>
-    <td align="center">
+    <div align="center" style="border: 1px solid; padding: 10px; display: inline-block; line-height: 3em;">
       <button id="reset" class="click">Reset</button>
       <button id="down" class="click">-1</button>
-      <button width="" id="up" class="click">+1</button>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" style="padding: 10px">
-      <span id="fib-out" style="border: 5px; font-size: x-large" class="click">fib 0 = 1</span>
-    </td>
-  </tr>        
-  <tr>
-    <td align="center" style="padding: 10px">
-      <div id="slider" style="width: 200px" class="slide"></div>        
-    </td>
-  </tr>        
-</table>
-	</div>
-	<div id="tabs-2">
-		<h3 class="ui-widget-header ui-corner-all">Hide</h3>
-		<p>
-			Etiam libero neque, luctus a, eleifend nec, semper at, lorem. Sed pede. Nulla lorem metus, adipiscing ut, luctus sed, hendrerit vitae, mi.
-		</p>
-
-	</div>
-	<div id="tabs-3">
-		<p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>
-		<p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
-	</div>
-</div>
-
-
-
-
-
+      <button id="up" class="click">+1</button>
+      <br/>
+      <span id="fib-out" style="font-size: x-large;" class="click">fib 0 = 1</span>
+      <br/>
+      <div id="slider" style="width: 200px" class="slide"></div>
+    </div>
 
         <div id="log"></div>
-
 
         <script type="text/javascript">
             $(document).ready(function() {
@@ -64,14 +27,12 @@
 
                 $("button").button();
 
-		$( "#slider" ).slider({
-			range: "min",
-			value: 0,
-			min: 0,
-			max: 25
-		});
-
-		$( "#tabs" ).tabs();
+                $( "#slider" ).slider({
+                        range: "min",
+                        value: 0,
+                        min: 0,
+                        max: 25
+                });
             });
         </script>
     </body>
