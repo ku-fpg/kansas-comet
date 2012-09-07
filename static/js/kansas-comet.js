@@ -31,7 +31,7 @@
 		$.kc.redraw(0);
 	},
 	redraw: function (count) {
-		debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count');
+		debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
 		$.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
             		type: "GET",
             		dataType: "script",
