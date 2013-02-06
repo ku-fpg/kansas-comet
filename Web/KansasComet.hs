@@ -8,6 +8,7 @@ module Web.KansasComet
     , registerEvents
     , send
     , waitForEvent
+    , queryGlobal
     , Document
     , Options(..)
     , Scope
@@ -30,6 +31,8 @@ import Control.Applicative
 import Data.Default
 import Data.List
 import Data.Monoid
+import Data.Maybe ( fromJust )
+import qualified Data.HashMap.Strict as HashMap
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
@@ -118,13 +121,18 @@ connect opt callback = do
            header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
            num <- param "id"
            uq :: Int <- param "uq"
---           liftIO $ print (num :: Int, event :: String)
-           val :: Value <- jsonData
---           liftIO $ print (val :: Value)
+           --liftIO $ print (num :: Int, event :: String)
+           wrappedVal :: Value <- jsonData
+           -- Unwrap the data wrapped, because 'jsonData' only supports
+           -- objects or arrays, but not primitive values like numbers
+           -- or booleans.
+           let val = fromJust $ let (Object m) = wrappedVal 
+                                in HashMap.lookup (T.pack "data") m
+           --liftIO $ print (val :: Value)
            db <- liftIO $ atomically $ readTVar contextDB
            case Map.lookup num db of
                Nothing  -> do
---                   liftIO $ print ("ignoring reply",uq,val)
+                   --liftIO $ print ("ignoring reply",uq,val)
                    text (LT.pack $ "alert('Ignore reply for session #" ++ show num ++ "');")
                Just doc -> do
                    liftIO $ do
@@ -193,6 +201,21 @@ query doc qText = do
                 ]
         getReply doc uq
 
+-- TODO: make thread safe
+-- The test ends with a return for the value you want to see.
+-- | 'queryGlobal doc (js, retVal)' executes the given 'js' Java Script
+--   in the global scope of the document 
+--   (not boxing it into a local function scope)
+--   and replies with the 'retVal' return value.
+queryGlobal :: Document -> (String, String) -> IO Value
+queryGlobal doc (js, retVal) = do
+        let uq = 37845 :: Int --secret doc 
+        -- should be uniq or is the document id sufficient?
+        send doc $ concat
+                [ js, ";"
+                , "$.kc.reply(", show uq, ",(", retVal, "));"
+                ]
+        getReply doc uq
 
 type EventName = String
 

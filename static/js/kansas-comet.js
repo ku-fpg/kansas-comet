@@ -100,7 +100,14 @@
       debug('reply(' + uq + ')');
            $.ajax({ url: the_prefix + "/reply/" + kansascomet_session + "/" + uq,
                     type: "POST",
-                    data: $.toJSON(obj),
+                    // This wrapper is needed because the JSON parser
+                    // used on the Haskell side only supports objects
+                    // and arrays. But the returned data might be just
+                    // a number or a boolean. So this wrapper keeps 
+                    // the value safe to parse and has to be unwrapped 
+                    // on server side. Formatting it as string is also
+                    // important for some reason.
+                    data: "{ \"data\": " + $.toJSON(obj) + " }",
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"});
    }
