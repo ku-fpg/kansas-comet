@@ -9,101 +9,101 @@
    var debug = function () { };
 
    $.kc = {
-	// If we want to debug, then add a true
-	connect: function(prefix) {
-		the_prefix = prefix;
-		// if there is a debug-log, then append debug messages to it
-		if ($('#debug-log').length > 0) {
-			debug = function(arg) {
-				$("#debug-log").prepend(arg + "<BR>");
-			};
-		}
+   // If we want to debug, then add a true
+   connect: function(prefix) {
+      the_prefix = prefix;
+      // if there is a debug-log, then append debug messages to it
+      if ($('#debug-log').length > 0) {
+         debug = function(arg) {
+            $("#debug-log").prepend(arg + "<BR>");
+         };
+      }
 
-    		$.ajax({ url: the_prefix,
-              		type: "POST",
-              		data: "",
-              		dataType: "script"});
-		debug('connect(' + prefix + ')');
-	},
-	session: function(session_id) {
-		kansascomet_session = session_id;
-		debug('session(' + session_id + ')');
-		$.kc.redraw(0);
-	},
-	redraw: function (count) {
-		debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
-		$.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
-            		type: "GET",
-            		dataType: "script",
-            		success: function success() { $.kc.redraw(count + 1); }
-		       });
-            	// TODO: Add failure; could happen
+          $.ajax({ url: the_prefix,
+                    type: "POST",
+                    data: "",
+                    dataType: "script"});
+      debug('connect(' + prefix + ')');
+   },
+   session: function(session_id) {
+      kansascomet_session = session_id;
+      debug('session(' + session_id + ')');
+      $.kc.redraw(0);
+   },
+   redraw: function (count) {
+      debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
+      $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
+                  type: "GET",
+                  dataType: "script",
+                  success: function success() { $.kc.redraw(count + 1); }
+             });
+               // TODO: Add failure; could happen
         },
-	// This says someone is listening on a specific event
-	// The full event name is "scope/eventname", for example
-	// "body/click"
-	register: function (scope, eventname, fn) {
-		debug('register(' + scope + ',' + eventname + ')');
-		var fulleventname = scope + "/" + eventname;
-     		eventQueues[fulleventname] = [];
-     		$(scope).on(eventname, "." + eventname, function (event,aux) {
-        		var e = fn(this,event,aux);
-			debug('{callback}on(' + eventname + ')');
-//			$("#log").append('{e:' + eventname  + '+' + $(this).slider('value') + ',' + $.toJSON(ui) + '}');
-        		e.eventname = eventname;
-			//      alert("EVENT " + e);
-			$.kc.send(fulleventname,e);
-     		});
-	},
+   // This says someone is listening on a specific event
+   // The full event name is "scope/eventname", for example
+   // "body/click"
+   register: function (scope, eventname, fn) {
+      debug('register(' + scope + ',' + eventname + ')');
+      var fulleventname = scope + "/" + eventname;
+           eventQueues[fulleventname] = [];
+           $(scope).on(eventname, "." + eventname, function (event,aux) {
+              var e = fn(this,event,aux);
+         debug('{callback}on(' + eventname + ')');
+//         $("#log").append('{e:' + eventname  + '+' + $(this).slider('value') + ',' + $.toJSON(ui) + '}');
+              e.eventname = eventname;
+         //      alert("EVENT " + e);
+         $.kc.send(fulleventname,e);
+           });
+   },
 
-	send: function (fulleventname, event) {
-		debug('send(' + fulleventname + ')');
-		if (eventCallbacks[fulleventname] == undefined) {
-                	eventQueues[fulleventname].push(event);
-        	} else {
-                	eventCallbacks[fulleventname](event);
-        	}
-	},
-	
-	// This waits for (full) named event(s). The second argument is the continuation
-	waitFor: function (scope, eventnames, fn) {
-		debug('waitFor(' + scope + ',' + eventnames + ')');
-		var prefixScope = function(o) { return scope + "/" + o; }
-		for (eventname in eventnames) {
-			var e = eventQueues[prefixScope(eventnames[eventname])].shift();
-			if (e != undefined) {
-				// call with event from queue
-				fn(e);
-				// and we are done
-				return;	
-			}
-			if (eventCallbacks[prefixScope(eventnames[eventname])] != undefined) {
-        			alert("ABORT: event queue callback failure for " + eventname);
-			}
-		}
-		// All the callback better be undefined
-		var f = function (e) {
-          			// delete all the waiting callback(s)
-				for (eventname in eventnames) {
-					 delete eventCallbacks[prefixScope(eventnames[eventname])];
-				}
-          			// and do the callback
-          			fn(e);
-		};
-		for (eventname in eventnames) {
-			 eventCallbacks[prefixScope(eventnames[eventname])] = f;
-		}
-	},
-	// There is a requirement that obj be an object or array.
-	// See RFC 4627 for details.
-	reply: function (uq,obj) {
-		debug('reply(' + uq + ')');
-        	$.ajax({ url: the_prefix + "/reply/" + kansascomet_session + "/" + uq,
-                 	type: "POST",
-                 	data: $.toJSON(obj),
-                 	contentType: "application/json; charset=utf-8",
-                 	dataType: "json"});
-	}
+   send: function (fulleventname, event) {
+      debug('send(' + fulleventname + ')');
+      if (eventCallbacks[fulleventname] == undefined) {
+                   eventQueues[fulleventname].push(event);
+           } else {
+                   eventCallbacks[fulleventname](event);
+           }
+   },
+   
+   // This waits for (full) named event(s). The second argument is the continuation
+   waitFor: function (scope, eventnames, fn) {
+      debug('waitFor(' + scope + ',' + eventnames + ')');
+      var prefixScope = function(o) { return scope + "/" + o; }
+      for (eventname in eventnames) {
+         var e = eventQueues[prefixScope(eventnames[eventname])].shift();
+         if (e != undefined) {
+            // call with event from queue
+            fn(e);
+            // and we are done
+            return;   
+         }
+         if (eventCallbacks[prefixScope(eventnames[eventname])] != undefined) {
+                 alert("ABORT: event queue callback failure for " + eventname);
+         }
+      }
+      // All the callback better be undefined
+      var f = function (e) {
+                   // delete all the waiting callback(s)
+            for (eventname in eventnames) {
+                delete eventCallbacks[prefixScope(eventnames[eventname])];
+            }
+                   // and do the callback
+                   fn(e);
+      };
+      for (eventname in eventnames) {
+          eventCallbacks[prefixScope(eventnames[eventname])] = f;
+      }
+   },
+   // There is a requirement that obj be an object or array.
+   // See RFC 4627 for details.
+   reply: function (uq,obj) {
+      debug('reply(' + uq + ')');
+           $.ajax({ url: the_prefix + "/reply/" + kansascomet_session + "/" + uq,
+                    type: "POST",
+                    data: $.toJSON(obj),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"});
+   }
      };
 })(jQuery);
 
