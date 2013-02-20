@@ -14,12 +14,16 @@ module Web.KansasComet
     , Scope
     , Template(..)
     , (.=)
+    , field
     , (<&>)
+    , abort
+    , Abort
     ) where
 
-import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
+import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData, body)
 import Data.Aeson hiding ((.=))
 import Data.Aeson.Types hiding ((.=))
+import qualified Data.Vector as Vector
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
@@ -212,12 +216,12 @@ query doc qText = do
 -- TODO: make thread safe
 -- The test ends with a return for the value you want to see.
 -- | 'queryGlobal doc (js, retVal)' executes the given 'js' Java Script
---   in the global scope of the document 
+--   in the global scope of the document
 --   (not boxing it into a local function scope)
 --   and replies with the 'retVal' return value.
 queryGlobal :: Document -> (String, String) -> IO Value
 queryGlobal doc (js, retVal) = do
-        let uq = 37845 :: Int --secret doc 
+        let uq = 37845 :: Int --secret doc
         -- should be uniq or is the document id sufficient?
         send doc $ concat
                 [ js, ";"
@@ -269,9 +273,13 @@ instance FromJSON a => FromJSON (Wrapped a) where
    parseJSON _          = mzero
 
 (.=) :: String -> String -> Field a
-(.=) = (:=)
+(.=) = Field
 
-data Field a = String := String
+data Field a = Field String String
+
+-- For fields of things we never need to register for (system-level in events, like abort).
+field :: String -> Field a
+field nm = Field nm "null"
 
 --field :: String -> String -> Field a
 --field = Field
@@ -321,7 +329,7 @@ parserFromJSON (Pure nm a)         o@(Object v) = do
         nm' <- (v .: T.pack "eventname")        -- house rule; *always* has an eventname
         if nm == nm' then pure a
                      else mzero
-parserFromJSON (p `App` (nm := _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
+parserFromJSON (p `App` (Field nm _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
 parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parserFromJSON t2 o
 parserFromJSON Empty               _            = mzero
 parserFromJSON _                   _            = mzero
@@ -341,6 +349,16 @@ extract tmpl = go tmpl []
   where
           go :: Template a -> [(String,String)] -> [(String, [(String, String)])]
           go (Pure nm _) xs            = [(nm,xs)]
-          go (t `App` (nm := expr)) xs = go t ((nm,expr) : xs)
+          go (t `App` (Field nm expr)) xs = go t ((nm,expr) : xs)
           go (Append t1 t2)         xs = go t1 xs ++ go t2 xs
           go (Empty)                xs = []
+
+abort :: Template Abort
+abort = event "abort" Abort
+            <&> field "whyabort"
+            <&> field "count"
+            <&> field "message"
+            <&> field "type"
+
+data Abort = Abort String Int Value Value
+        deriving (Show)
