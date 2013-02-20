@@ -92,8 +92,8 @@ connect opt callback = do
                 "Kansas Comet: get .../act/" ++ show num
 --            liftIO $ print (num :: Int)
 
-            let tryPushAction :: TMVar T.Text -> ActionM ()
-                tryPushAction var = do
+            let tryPushAction :: TMVar T.Text -> Int -> ActionM ()
+                tryPushAction var num = do
                     -- The PUSH archtecture means that we wait upto 3 seconds if there
                     -- is not javascript to push yet. This stops a busy-waiting
                     -- (or technically restricts it to once every 3 second busy)
@@ -102,6 +102,10 @@ connect opt callback = do
                             b <- readTVar ping
                             if b then return Nothing else do
                                  liftM Just (takeTMVar var)
+
+
+                    when (verbose opt >= 2) $ liftIO $ putStrLn $
+                                "Kansas Comet (sending to " ++ show num ++ "):\n" ++ show res
 
                     case res of
                      Just js -> do
@@ -114,7 +118,7 @@ connect opt callback = do
             db <- liftIO $ atomically $ readTVar contextDB
             case Map.lookup num db of
                Nothing  -> text (LT.pack $ "alert('Can not find act #" ++ show num ++ "');")
-               Just doc -> tryPushAction (sending doc)
+               Just doc -> tryPushAction (sending doc) num
 
 
    post (capture $ prefix opt ++ "/reply/:id/:uq") $ do
