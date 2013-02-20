@@ -334,8 +334,6 @@ parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parser
 parserFromJSON Empty               _            = mzero
 parserFromJSON _                   _            = mzero
 
-data Witness a = Witness
-
 registerEvents :: Document -> Scope -> Template event -> IO ()
 registerEvents doc scope tmpls
         = sequence_ [ register doc scope nm (record fields)
