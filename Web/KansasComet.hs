@@ -23,7 +23,7 @@ module Web.KansasComet
     , docUniqs
     ) where
 
-import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData, body)
+import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
 import Data.Aeson hiding ((.=))
 import Data.Aeson.Types hiding ((.=))
 import Control.Monad
@@ -58,11 +58,11 @@ connect opt callback = do
    -- A unique number generator, or ephemeral generator.
    -- This is the (open) secret between the client and server.
    -- (Why are we using an MVar vs a TMVar? No specific reason here)
-   uVar <- liftIO $ newMVar 0
+   uniqVar <- liftIO $ newMVar 0
    let getUniq :: IO Int
        getUniq = do
-              u <- takeMVar uVar
-              putMVar uVar (u + 1)
+              u <- takeMVar uniqVar
+              putMVar uniqVar (u + 1)
               return u
 
    contextDB <- liftIO $ atomically $ newTVar $ (Map.empty :: Map.Map Int Document)
@@ -100,7 +100,7 @@ connect opt callback = do
 --            liftIO $ print (num :: Int)
 
             let tryPushAction :: TMVar T.Text -> Int -> ActionM ()
-                tryPushAction var num = do
+                tryPushAction var n = do
                     -- The PUSH archtecture means that we wait upto 3 seconds if there
                     -- is not javascript to push yet. This stops a busy-waiting
                     -- (or technically restricts it to once every 3 second busy)
@@ -112,7 +112,7 @@ connect opt callback = do
 
 
                     when (verbose opt >= 2) $ liftIO $ putStrLn $
-                                "Kansas Comet (sending to " ++ show num ++ "):\n" ++ show res
+                                "Kansas Comet (sending to " ++ show n ++ "):\n" ++ show res
 
                     case res of
                      Just js -> do
@@ -190,8 +190,8 @@ waitForEvent doc scope tmpl = do
                 [ "$.kc.waitFor(" ++ show scope ++ "," ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
         res <- getReply doc uq
         case parse (parserFromJSON tmpl) res of
-           Success event -> return $ Just event
-           _             -> return $ Nothing     -- something went wrong
+           Success evt -> return $ Just evt
+           _           -> return $ Nothing     -- something went wrong
 
 -- internal function, waits for a numbered reply
 getReply :: Document -> Int -> IO Value
@@ -324,18 +324,18 @@ instance Functor Template where
         fmap f (App t fld)    = App (fmap (fmap f) t) fld
         fmap f (Pure nm a)    = Pure nm (f a)
         fmap f (Append t1 t2) = Append (fmap f t1) (fmap f t2)
-        fmap f Empty = Empty
-
+        fmap _ Empty = Empty
+{- GHC says this is not used:
 alt :: Template a -> Template b -> Template (Either a b)
 alt t1 t2 = fmap Left t1 <> fmap Right t2
-
+-}
 infixl 1 <&>
-
+{- GHC says this is not used:
 class Eventable e where
         events :: [Template e]
 
 newtype EventWrapper a = EventWrapper a
-
+-}
 {-
 instance Eventable e => FromJSON (EventWrapper e) where
    parseJSON (Object v) = EventWrapper
@@ -343,7 +343,7 @@ instance Eventable e => FromJSON (EventWrapper e) where
    parseJSON _          = mzero
 -}
 parserFromJSON :: Template a -> Value -> Parser a
-parserFromJSON (Pure nm a)         o@(Object v) = do
+parserFromJSON (Pure nm a) (Object v) = do
         nm' <- (v .: T.pack "eventname")        -- house rule; *always* has an eventname
         if nm == nm' then pure a
                      else mzero
@@ -367,7 +367,7 @@ extract tmpl = go tmpl []
           go (Pure nm _) xs            = [(nm,xs)]
           go (t `App` (Field nm expr)) xs = go t ((nm,expr) : xs)
           go (Append t1 t2)         xs = go t1 xs ++ go t2 xs
-          go (Empty)                xs = []
+          go (Empty)               _xs = []
 
 abort :: Template Abort
 abort = event "abort" Abort
