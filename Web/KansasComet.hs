@@ -8,6 +8,7 @@ module Web.KansasComet
     , registerEvents
     , send
     , waitForEvent
+    , query
     , queryGlobal
     , Document
     , Options(..)
@@ -183,7 +184,7 @@ register doc scope eventName eventBuilder =
 
 waitForEvent :: Document -> Scope -> Template event -> IO (Maybe event)
 waitForEvent doc scope tmpl = do
-        let uq = 1023949 :: Int -- later, have this random generated
+        uq <- docUniq doc -- Is random generation really neeed? later, have this random generated
         let eventNames = map fst $ extract tmpl
         send doc $ concat
                 [ "$.kc.waitFor(" ++ show scope ++ "," ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
@@ -205,9 +206,12 @@ getReply doc num = do
 
 -- TODO: make thread safe
 -- The test ends with a return for the value you want to see.
+-- | @query doc js@ executes the given @js@ Java Script
+--   in the scope of a local function
+--   and replies with the return value of that function.
 query :: Document -> String -> IO Value
 query doc qText = do
-        let uq = 37845 :: Int -- should be uniq
+        uq <- docUniq doc
         send doc $ concat
                 [ "$.kc.reply(" ++ show uq ++ ",function(){"
                 , qText
@@ -217,13 +221,13 @@ query doc qText = do
 
 -- TODO: make thread safe
 -- The test ends with a return for the value you want to see.
--- | 'queryGlobal doc (js, retVal)' executes the given 'js' Java Script
+-- | @queryGlobal doc (js, retVal)@ executes the given @js@ Java Script
 --   in the global scope of the document
 --   (not boxing it into a local function scope)
---   and replies with the 'retVal' return value.
+--   and replies with the @retVal@ return value.
 queryGlobal :: Document -> (String, String) -> IO Value
 queryGlobal doc (js, retVal) = do
-        let uq = 37845 :: Int --secret doc
+        uq <- docUniq doc
         -- should be uniq or is the document id sufficient?
         send doc $ concat
                 [ js, ";"
@@ -244,9 +248,11 @@ data Document = Document
         , uVar      :: TVar Int                 -- ^ Uniq number supply
         }
 
+-- | Generate one unique integer from the document.
 docUniq :: Document -> IO Int
 docUniq = docUniqs 1
 
+-- | Generate n unique integers from the document.
 docUniqs :: Int -> Document -> IO Int
 docUniqs n doc = atomically $ do
         u <- readTVar (uVar doc)
