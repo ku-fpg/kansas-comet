@@ -18,6 +18,8 @@ module Web.KansasComet
     , (<&>)
     , abort
     , Abort
+    , docUniq
+    , docUniqs
     ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData, body)
@@ -68,7 +70,8 @@ connect opt callback = do
             uq <- getUniq
             picture <- atomically $ newEmptyTMVar
             callbacks <- atomically $ newTVar $ Map.empty
-            let cxt = Document picture callbacks uq
+            uqVar <- atomically $ newTVar 0
+            let cxt = Document picture callbacks uq uqVar
             liftIO $ atomically $ do
                     db <- readTVar contextDB
                     -- assumes the getUniq is actually unique
@@ -237,8 +240,18 @@ data Document = Document
                                                 -- This is a TMVar to stop the generation
                                                 -- getting ahead of the rendering engine
         , listening :: TVar (Map.Map Int Value) -- ^ This is numbered replies.
-        , secret    :: Int                      -- ^ the number of this document
+        , secret    :: Int                      -- ^ the (session) number of this document
+        , uVar      :: TVar Int                 -- ^ Uniq number supply
         }
+
+docUniq :: Document -> IO Int
+docUniq = docUniqs 1
+
+docUniqs :: Int -> Document -> IO Int
+docUniqs n doc = atomically $ do
+        u <- readTVar (uVar doc)
+        writeTVar (uVar doc) (u + n)
+        return u
 
 data Options = Options
         { prefix  :: String
