@@ -126,11 +126,15 @@ connect opt callback = do
            num <- param "id"
            uq :: Int <- param "uq"
            --liftIO $ print (num :: Int, event :: String)
+
+           when (verbose opt >= 2) $ liftIO $ putStrLn $
+                "Kansas Comet: post .../reply/" ++ show num ++ "/" ++ show uq
+
            wrappedVal :: Value <- jsonData
            -- Unwrap the data wrapped, because 'jsonData' only supports
            -- objects or arrays, but not primitive values like numbers
            -- or booleans.
-           let val = fromJust $ let (Object m) = wrappedVal 
+           let val = fromJust $ let (Object m) = wrappedVal
                                 in HashMap.lookup (T.pack "data") m
            --liftIO $ print (val :: Value)
            db <- liftIO $ atomically $ readTVar contextDB
