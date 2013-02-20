@@ -23,7 +23,6 @@ module Web.KansasComet
 import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData, body)
 import Data.Aeson hiding ((.=))
 import Data.Aeson.Types hiding ((.=))
-import qualified Data.Vector as Vector
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
