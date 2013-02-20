@@ -32,16 +32,6 @@
       $.kc.redraw(0);
    },
 
-   abort: function (obj) {
-	// About the session, and say why.
-      debug('abort() url = ' + the_prefix + "/abort/" + kansascomet_session);
-      $.ajax({ url: the_prefix + "/abort/" + kansascomet_session,
-                    type: "POST",
-		    data: "{ \"data\": " + $.toJSON(obj) + " }",
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "script"});
-   },
-
    redraw: function (count) {
       debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
       $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
