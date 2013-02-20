@@ -28,14 +28,32 @@
    session: function(session_id) {
       kansascomet_session = session_id;
       debug('session(' + session_id + ')');
+      $.kc.register("session","abort",null);
       $.kc.redraw(0);
    },
+
+   abort: function (obj) {
+	// About the session, and say why.
+      debug('abort() url = ' + the_prefix + "/abort/" + kansascomet_session);
+      $.ajax({ url: the_prefix + "/abort/" + kansascomet_session,
+                    type: "POST",
+		    data: "{ \"data\": " + $.toJSON(obj) + " }",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "script"});
+   },
+
    redraw: function (count) {
       debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
       $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
                   type: "GET",
                   dataType: "script",
-                  success: function success() { $.kc.redraw(count + 1); }
+                  success: function success() { $.kc.redraw(count + 1); },
+		  error: function failure(ig,ty,msg) { 
+			$.kc.send("session/abort",{ eventname : "abort",
+						    whyabort  : "redraw failed",
+						    count     : count,
+						    type      : ty,
+						    message   : msg }); }
              });
                // TODO: Add failure; could happen
         },
@@ -46,20 +64,26 @@
       debug('register(' + scope + ',' + eventname + ')');
       var fulleventname = scope + "/" + eventname;
            eventQueues[fulleventname] = [];
-           $(scope).on(eventname, "." + eventname, function (event,aux) {
-              var e = fn(this,event,aux);
-         debug('{callback}on(' + eventname + ')');
-//         $("#log").append('{e:' + eventname  + '+' + $(this).slider('value') + ',' + $.toJSON(ui) + '}');
-              e.eventname = eventname;
-         //      alert("EVENT " + e);
-         $.kc.send(fulleventname,e);
-           });
+	   if (fn == null) {
+	       // no special setup required, because no callback to call.
+	   } else {
+               $(scope).on(eventname, "." + eventname, function (event,aux) {
+                  var e = fn(this,event,aux);
+                  debug('{callback}on(' + eventname + ')');
+                  e.eventname = eventname;
+                  $.kc.send(fulleventname,e);
+              });
+	   }
    },
 
    send: function (fulleventname, event) {
       debug('send(' + fulleventname + ')');
       if (eventCallbacks[fulleventname] == undefined) {
+      		if (eventQueues[fulleventname] != undefined) { 
                    eventQueues[fulleventname].push(event);
+		} else {
+      		     debug('send(' + fulleventname + ') not sent (no one listening)');
+		}
            } else {
                    eventCallbacks[fulleventname](event);
            }
