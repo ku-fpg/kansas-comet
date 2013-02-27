@@ -36,7 +36,7 @@ import Control.Concurrent
 import Control.Applicative
 import Data.Default
 import Data.List
-import Data.Monoid
+import Data.Semigroup
 import Data.Maybe ( fromJust )
 import qualified Data.HashMap.Strict as HashMap
 
@@ -313,35 +313,19 @@ data Template :: * -> * where
         App :: FromJSON a => Template (a -> b) -> Field a -> Template b
         Pure :: String -> a                               -> Template a
         Append :: Template a -> Template a                  -> Template a
-        Empty ::                                        Template a
 
-instance Monoid (Template a) where
-        mappend = Append
-        mempty  = Empty
+instance Semigroup (Template a) where
+        (<>) = Append
 
 
 instance Functor Template where
         fmap f (App t fld)    = App (fmap (fmap f) t) fld
         fmap f (Pure nm a)    = Pure nm (f a)
         fmap f (Append t1 t2) = Append (fmap f t1) (fmap f t2)
-        fmap _ Empty = Empty
-{- GHC says this is not used:
-alt :: Template a -> Template b -> Template (Either a b)
-alt t1 t2 = fmap Left t1 <> fmap Right t2
--}
-infixl 1 <&>
-{- GHC says this is not used:
-class Eventable e where
-        events :: [Template e]
 
-newtype EventWrapper a = EventWrapper a
--}
-{-
-instance Eventable e => FromJSON (EventWrapper e) where
-   parseJSON (Object v) = EventWrapper
-                       <$> foldr (<|>) empty (map (parserFromJSON v) events)
-   parseJSON _          = mzero
--}
+
+infixl 1 <&>
+
 parserFromJSON :: Template a -> Value -> Parser a
 parserFromJSON (Pure nm a) (Object v) = do
         nm' <- (v .: T.pack "eventname")        -- house rule; *always* has an eventname
@@ -349,7 +333,6 @@ parserFromJSON (Pure nm a) (Object v) = do
                      else mzero
 parserFromJSON (p `App` (Field nm _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
 parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parserFromJSON t2 o
-parserFromJSON Empty               _            = mzero
 parserFromJSON _                   _            = mzero
 
 registerEvents :: Document -> Scope -> Template event -> IO ()
@@ -358,7 +341,6 @@ registerEvents doc scope tmpls
                     | (nm,fields) <- extract tmpls
                     ]
 
--- TODO: extract => extractEventNames
 
 extract :: Template a -> [(String, [(String, String)])]
 extract tmpl = go tmpl []
@@ -367,7 +349,6 @@ extract tmpl = go tmpl []
           go (Pure nm _) xs            = [(nm,xs)]
           go (t `App` (Field nm expr)) xs = go t ((nm,expr) : xs)
           go (Append t1 t2)         xs = go t1 xs ++ go t2 xs
-          go (Empty)               _xs = []
 
 abort :: Template Abort
 abort = event "abort" Abort

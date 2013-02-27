@@ -31,6 +31,7 @@ Library
                        containers       >= 0.4,
                        data-default     == 0.5.*,
                        scotty           >= 0.4.3 && < 0.5,
+                       semigroups       >= 0.9,
                        stm              >= 2.2,
                        transformers     >= 0.3.0,
                        text             == 0.11.*
