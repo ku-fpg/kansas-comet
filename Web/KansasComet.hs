@@ -21,6 +21,9 @@ module Web.KansasComet
     , Abort
     , docUniq
     , docUniqs
+    , getReply
+    , debugDocument
+    , debugReplyDocument
     ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
@@ -359,3 +362,23 @@ abort = event "abort" Abort
 
 data Abort = Abort String Int Value Value
         deriving (Show)
+
+------------------------------------------------------------------------------------
+
+debugDocument :: IO Document
+debugDocument = do
+  picture <- atomically $ newEmptyTMVar
+  callbacks <- atomically $ newTVar $ Map.empty
+  uqVar <- atomically $ newTVar 0
+  forkIO $ forever $ do
+          res <- atomically $ takeTMVar $ picture
+          putStrLn $ "Sending: " ++ show res
+
+
+  return $ Document picture callbacks 0 uqVar
+
+debugReplyDocument :: Document -> Int -> Value -> IO ()
+debugReplyDocument doc uq val = atomically $ do
+   m <- readTVar (listening doc)
+   writeTVar (listening doc) $ Map.insert uq val m
+
