@@ -8,6 +8,10 @@
 
    var debug = function () { };
 
+   var failure_callback = function(ig,ty,msg,re) {
+		console.error("redraw failed (retrying) : " + ig + "," + ty + "," + msg);
+	}
+
    $.kc = {
    // If we want to debug, then add a true
    connect: function(prefix) {
@@ -32,6 +36,11 @@
       $.kc.redraw(0);
    },
 
+   // Set failure behavior
+   failure: function(f) {
+	failure_callback = f;
+   },
+
    redraw: function (count) {
       debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
       $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
@@ -39,11 +48,8 @@
                   dataType: "script",
                   success: function success() { $.kc.redraw(count + 1); },
 		  error: function failure(ig,ty,msg) { 
-			$.kc.send("session/abort",{ eventname : "abort",
-						    whyabort  : "redraw failed",
-						    count     : count,
-						    type      : ty,
-						    message   : msg }); }
+			failure_callback(ig,ty,msg,function() { $.kc.redraw(count + 1); });
+		  }
              });
                // TODO: Add failure; could happen
         },
