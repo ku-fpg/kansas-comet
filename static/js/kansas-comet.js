@@ -16,10 +16,11 @@
    // If we want to debug, then add a true
    connect: function(prefix) {
       the_prefix = prefix;
-      // if there is a debug-log, then append debug messages to it
-      if ($('#debug-log').length > 0) {
+      // if there is a ?debug=0, then send debug messages to it
+     if (window.location.search == '?debug=1')  {
+	console.log("using logging to console for " + prefix);
          debug = function(arg) {
-            $("#debug-log").prepend(arg + "<BR>");
+	    console.log(arg);
          };
       }
 
