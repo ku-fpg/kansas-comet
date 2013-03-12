@@ -15,7 +15,7 @@ import Control.Monad
 --import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.STM
-import Data.Monoid
+import Data.Semigroup
 import Data.List as L
 import Control.Monad.IO.Class
 import Network.Wai.Middleware.Static
