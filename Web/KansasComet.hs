@@ -104,7 +104,7 @@ connect opt callback = do
    -- GET the updates to the documents (should this be an (empty) POST?)
 
 --   liftIO $ print $ prefix opt ++ "/act/:id/:act"
-   get (capture $ prefix opt ++ "/act/:session/:id/:act") $ do
+   get (capture $ prefix opt ++ "/act/" ++ server_id ++ "/:id/:act") $ do
             header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
             -- do something and return a new list of commands to the client
             num <- param "id"
@@ -142,7 +142,7 @@ connect opt callback = do
                Just doc -> tryPushAction (sending doc) num
 
 
-   post (capture $ prefix opt ++ "/reply/:session/:id/:uq") $ do
+   post (capture $ prefix opt ++ "/reply/" ++ server_id ++ "/:id/:uq") $ do
            header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
            num <- param "id"
            uq :: Int <- param "uq"
