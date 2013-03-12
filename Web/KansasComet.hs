@@ -45,6 +45,9 @@ import qualified Data.HashMap.Strict as HashMap
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
+import Data.Time.Calendar
+import Data.Time.Clock
+import Numeric
 
 -- | connect "/foobar" (...) gives
 
@@ -68,6 +71,14 @@ connect opt callback = do
               putMVar uniqVar (u + 1)
               return u
 
+   tm ::  UTCTime  <- liftIO $ getCurrentTime
+
+   let server_id
+           = Numeric.showHex (toModifiedJulianDay (utctDay tm))
+           $ ("-" ++)
+           $ Numeric.showHex (floor (utctDayTime tm * 1000) :: Integer)
+           $ ""
+
    contextDB <- liftIO $ atomically $ newTVar $ (Map.empty :: Map.Map Int Document)
    let newContext :: IO Int
        newContext = do
@@ -88,12 +99,12 @@ connect opt callback = do
    post (capture $ prefix opt ++ "/") $ do
 --            liftIO $ print "got root"
             uq  <- liftIO $ newContext
-            text (LT.pack $ "$.kc.session(" ++ show uq ++ ");")
+            text (LT.pack $ "$.kc.session(" ++ show server_id ++ "," ++ show uq ++ ");")
 
    -- GET the updates to the documents (should this be an (empty) POST?)
 
 --   liftIO $ print $ prefix opt ++ "/act/:id/:act"
-   get (capture $ prefix opt ++ "/act/:id/:act") $ do
+   get (capture $ prefix opt ++ "/act/:session/:id/:act") $ do
             header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
             -- do something and return a new list of commands to the client
             num <- param "id"
@@ -127,11 +138,11 @@ connect opt callback = do
 
             db <- liftIO $ atomically $ readTVar contextDB
             case Map.lookup num db of
-               Nothing  -> text (LT.pack $ "alert('Can not find act #" ++ show num ++ "');")
+               Nothing  -> text (LT.pack $ "console.warn('Can not find act #" ++ show num ++ "');")
                Just doc -> tryPushAction (sending doc) num
 
 
-   post (capture $ prefix opt ++ "/reply/:id/:uq") $ do
+   post (capture $ prefix opt ++ "/reply/:session/:id/:uq") $ do
            header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
            num <- param "id"
            uq :: Int <- param "uq"
@@ -150,8 +161,7 @@ connect opt callback = do
            db <- liftIO $ atomically $ readTVar contextDB
            case Map.lookup num db of
                Nothing  -> do
-                   --liftIO $ print ("ignoring reply",uq,val)
-                   text (LT.pack $ "alert('Ignore reply for session #" ++ show num ++ "');")
+                   text (LT.pack $ "console.warn('Ignore reply for session #" ++ show num ++ "');")
                Just doc -> do
                    liftIO $ do
                          atomically $ do

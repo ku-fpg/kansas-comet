@@ -2,6 +2,7 @@
 (function($) {
    var the_prefix = "";
    var kansascomet_session;
+   var kansascomet_server;
    var eventQueues = {};   // TODO: add the use of the queue
    var eventCallbacks = {};
    var please_debug = false;
@@ -30,7 +31,8 @@
                     dataType: "script"});
       debug('connect(' + prefix + ')');
    },
-   session: function(session_id) {
+   session: function(server_id, session_id) {
+      kansascomet_server = server_id;
       kansascomet_session = session_id;
       debug('session(' + session_id + ')');
       $.kc.register("session","abort",null);
@@ -43,8 +45,8 @@
    },
 
    redraw: function (count) {
-      debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_session + "/" + count);
-      $.ajax({ url: the_prefix + "/act/" + kansascomet_session + "/" + count,
+      debug('redraw(' + count + ') url = ' + the_prefix + "/act/" + kansascomet_server + "/" + kansascomet_session + "/" + count);
+      $.ajax({ url: the_prefix + "/act/" + kansascomet_server + "/" + kansascomet_session + "/" + count,
                   type: "GET",
                   dataType: "script",
                   success: function success() { $.kc.redraw(count + 1); },
@@ -119,7 +121,7 @@
    // See RFC 4627 for details.
    reply: function (uq,obj) {
       debug('reply(' + uq + ')');
-           $.ajax({ url: the_prefix + "/reply/" + kansascomet_session + "/" + uq,
+           $.ajax({ url: the_prefix + "/reply/" + kansascomet_server + "/" + kansascomet_session + "/" + uq,
                     type: "POST",
                     // This wrapper is needed because the JSON parser
                     // used on the Haskell side only supports objects
