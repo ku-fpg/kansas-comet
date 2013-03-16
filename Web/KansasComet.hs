@@ -1,24 +1,10 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
 module Web.KansasComet
     ( connect
-    , extract
-    , event
     , kCometPlugin
-    , register
-    , registerEvents
     , send
-    , waitForEvent
-    , query
-    , queryGlobal
     , Document
     , Options(..)
-    , Scope
-    , Template(..)
-    , (.=)
-    , field
-    , (<&>)
-    , abort
-    , Abort
     , docUniq
     , docUniqs
     , getReply
@@ -185,27 +171,7 @@ kCometPlugin = do
 send :: Document -> String -> IO ()
 send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 
--- The String argument returns an object, which is what part of the event get sent to Haskell.
-register :: Document -> Scope -> EventName -> String -> IO ()
-register doc scope eventName eventBuilder =
-        send doc $ concat
-                        [ "$.kc.register(" ++ show scope ++ "," ++ show eventName ++ ",function(widget,event,aux) {"
-                        , eventBuilder
-                        , "});"
-                        ]
-
-waitForEvent :: Document -> Scope -> Template event -> IO (Maybe event)
-waitForEvent doc scope tmpl = do
-        uq <- docUniq doc -- Is random generation really neeed? later, have this random generated
-        let eventNames = map fst $ extract tmpl
-        send doc $ concat
-                [ "$.kc.waitFor(" ++ show scope ++ "," ++ show eventNames ++ ",function(e) { $.kc.reply(" ++ show uq ++ ",e);});" ]
-        res <- getReply doc uq
-        case parse (parserFromJSON tmpl) res of
-           Success evt -> return $ Just evt
-           _           -> return $ Nothing     -- something went wrong
-
--- internal function, waits for a numbered reply
+-- | wait for a virtual-to-this-document's port number's reply.
 getReply :: Document -> Int -> IO Value
 getReply doc num = do
         atomically $ do
@@ -216,40 +182,6 @@ getReply doc num = do
                       writeTVar (listening doc) $ Map.delete num db
                       return r
 
--- TODO: make thread safe
--- The test ends with a return for the value you want to see.
--- | @query doc js@ executes the given @js@ Java Script
---   in the scope of a local function
---   and replies with the return value of that function.
-query :: Document -> String -> IO Value
-query doc qText = do
-        uq <- docUniq doc
-        send doc $ concat
-                [ "$.kc.reply(" ++ show uq ++ ",function(){"
-                , qText
-                , "}());"
-                ]
-        getReply doc uq
-
--- TODO: make thread safe
--- The test ends with a return for the value you want to see.
--- | @queryGlobal doc (js, retVal)@ executes the given @js@ Java Script
---   in the global scope of the document
---   (not boxing it into a local function scope)
---   and replies with the @retVal@ return value.
-queryGlobal :: Document -> (String, String) -> IO Value
-queryGlobal doc (js, retVal) = do
-        uq <- docUniq doc
-        -- should be uniq or is the document id sufficient?
-        send doc $ concat
-                [ js, ";"
-                , "$.kc.reply(", show uq, ",(", retVal, "));"
-                ]
-        getReply doc uq
-
-type EventName = String
-
-type Scope = String
 
 data Document = Document
         { sending   :: TMVar T.Text             -- ^ Code to be sent to the browser
@@ -282,95 +214,6 @@ instance Default Options where
         , verbose = 1
         }
 
-
--- | Structure of a Record for showing
-type Record = [(String,String)]
-
--- | Builds a statement that returns a record of named fields.
-record :: Record -> String
-record xs = "return { " ++ concat (intersperse " , " [ tag ++ " : " ++ expr | (tag,expr) <- xs ]) ++ " };"
-
-{-
-res <- query doc (Text.pack "return { wrapped : $('#fib-in').attr('value') };")
--}
-
-data Wrapped a = Wrapped a
-        deriving Show
-
-instance FromJSON a => FromJSON (Wrapped a) where
-   parseJSON (Object v) = Wrapped    <$>
-                          (v .: "wrapped")
-   parseJSON _          = mzero
-
-(.=) :: String -> String -> Field a
-(.=) = Field
-
-data Field a = Field String String
-
--- For fields of things we never need to register for (system-level in events, like abort).
-field :: String -> Field a
-field nm = Field nm "null"
-
---field :: String -> String -> Field a
---field = Field
-
-event :: String -> a -> Template a
-event = Pure
-
-(<&>) :: (FromJSON a) => Template (a -> b) -> Field a -> Template b
-(<&>) = App
-
--- TODO: Schema
-data Template :: * -> * where
-        App :: FromJSON a => Template (a -> b) -> Field a -> Template b
-        Pure :: String -> a                               -> Template a
-        Append :: Template a -> Template a                  -> Template a
-
-instance Semigroup (Template a) where
-        (<>) = Append
-
-
-instance Functor Template where
-        fmap f (App t fld)    = App (fmap (fmap f) t) fld
-        fmap f (Pure nm a)    = Pure nm (f a)
-        fmap f (Append t1 t2) = Append (fmap f t1) (fmap f t2)
-
-
-infixl 1 <&>
-
-parserFromJSON :: Template a -> Value -> Parser a
-parserFromJSON (Pure nm a) (Object v) = do
-        nm' <- (v .: T.pack "eventname")        -- house rule; *always* has an eventname
-        if nm == nm' then pure a
-                     else mzero
-parserFromJSON (p `App` (Field nm _)) o@(Object v) = parserFromJSON p o <*> (v .: T.pack nm)
-parserFromJSON (Append t1 t2)      o            = parserFromJSON t1 o <|> parserFromJSON t2 o
-parserFromJSON _                   _            = mzero
-
-registerEvents :: Document -> Scope -> Template event -> IO ()
-registerEvents doc scope tmpls
-        = sequence_ [ register doc scope nm (record fields)
-                    | (nm,fields) <- extract tmpls
-                    ]
-
-
-extract :: Template a -> [(String, [(String, String)])]
-extract tmpl = go tmpl []
-  where
-          go :: Template a -> [(String,String)] -> [(String, [(String, String)])]
-          go (Pure nm _) xs            = [(nm,xs)]
-          go (t `App` (Field nm expr)) xs = go t ((nm,expr) : xs)
-          go (Append t1 t2)         xs = go t1 xs ++ go t2 xs
-
-abort :: Template Abort
-abort = event "abort" Abort
-            <&> field "whyabort"
-            <&> field "count"
-            <&> field "message"
-            <&> field "type"
-
-data Abort = Abort String Int Value Value
-        deriving (Show)
 
 ------------------------------------------------------------------------------------
 
