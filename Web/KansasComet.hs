@@ -5,8 +5,6 @@ module Web.KansasComet
     , send
     , Document
     , Options(..)
-    , docUniq
-    , docUniqs
     , getReply
     , debugDocument
     , debugReplyDocument
@@ -71,8 +69,7 @@ connect opt callback = do
             uq <- getUniq
             picture <- atomically $ newEmptyTMVar
             callbacks <- atomically $ newTVar $ Map.empty
-            uqVar <- atomically $ newTVar 0
-            let cxt = Document picture callbacks uq uqVar
+            let cxt = Document picture callbacks uq
             liftIO $ atomically $ do
                     db <- readTVar contextDB
                     -- assumes the getUniq is actually unique
@@ -189,19 +186,8 @@ data Document = Document
                                                 -- getting ahead of the rendering engine
         , listening :: TVar (Map.Map Int Value) -- ^ This is numbered replies.
         , secret    :: Int                      -- ^ the (session) number of this document
-        , uVar      :: TVar Int                 -- ^ Uniq number supply
         }
 
--- | Generate one unique integer from the document.
-docUniq :: Document -> IO Int
-docUniq = docUniqs 1
-
--- | Generate n unique integers from the document.
-docUniqs :: Int -> Document -> IO Int
-docUniqs n doc = atomically $ do
-        u <- readTVar (uVar doc)
-        writeTVar (uVar doc) (u + n)
-        return u
 
 data Options = Options
         { prefix  :: String
@@ -221,13 +207,12 @@ debugDocument :: IO Document
 debugDocument = do
   picture <- atomically $ newEmptyTMVar
   callbacks <- atomically $ newTVar $ Map.empty
-  uqVar <- atomically $ newTVar 0
   forkIO $ forever $ do
           res <- atomically $ takeTMVar $ picture
           putStrLn $ "Sending: " ++ show res
 
 
-  return $ Document picture callbacks 0 uqVar
+  return $ Document picture callbacks 0
 
 debugReplyDocument :: Document -> Int -> Value -> IO ()
 debugReplyDocument doc uq val = atomically $ do
