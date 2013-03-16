@@ -31,6 +31,7 @@
                     dataType: "script"});
       debug('connect(' + prefix + ')');
    },
+
    session: function(server_id, session_id) {
       kansascomet_server = server_id;
       kansascomet_session = session_id;

@@ -97,7 +97,6 @@ connect opt callback = do
 
    -- POST starts things off.
    post (capture $ prefix opt ++ "/") $ do
---            liftIO $ print "got root"
             uq  <- liftIO $ newContext
             text (LT.pack $ "$.kc.session(" ++ show server_id ++ "," ++ show uq ++ ");")
 
