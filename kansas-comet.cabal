@@ -1,6 +1,6 @@
 Name:                kansas-comet
-Version:             0.1
-Synopsis:            A javascript push mechanism and event listener support
+Version:             0.2
+Synopsis:            A javascript push mechanism based on the comet idiom
 Homepage:            https://github.com/kufpg/kansas-comet/
 Bug-reports:         https://github.com/kufpg/kansas-comet/
 License:             BSD3
@@ -34,13 +34,13 @@ Library
                        semigroups       >= 0.9,
                        stm              >= 2.2,
                        transformers     >= 0.3.0,
-                       text             == 0.11.*,
+                       text             >= 0.11,
                        time             >= 1.4
 
 -- text is needed just for scotty's literal
 
   GHC-options: -Wall -fno-warn-orphans
 
---source-repository head
---  type:     git
---  location: git://github.com/kufpg/kansas-comet.git
+source-repository head
+  type:     git
+  location: git://github.com/ku-fpg/kansas-comet.git
