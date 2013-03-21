@@ -1,0 +1,42 @@
+Name:                kansas-comet-example
+Version:             0.1
+Synopsis:            Example of Kansas Comet
+License:             BSD3
+Copyright:           (c) 2013 The University of Kansas
+Build-type:          Simple
+Cabal-version:       >= 1.10
+
+data-files:
+-- js
+    js/jquery-json.js
+    js/jquery-ui.js
+    js/jquery.js
+
+-- css
+    css/ui-lightness/*.css 
+    css/ui-lightness/images/*.png
+
+-- And the individual tests' index files.
+    index.html
+
+Executable kansas-comet
+    Other-Modules:       Paths_kansas_comet_example
+    Build-Depends: 
+         base                   >= 4.6          && < 5,
+         kansas-comet           == 0.2,
+         aeson                  >= 0.6.1        && < 0.7,
+         scotty                 >= 0.4.6        && < 0.4.7,
+         containers             == 0.5.*,
+         data-default           == 0.5.*,
+         semigroups             >= 0.9          && < 0.10,
+         stm                    >= 2.4.2        && < 2.5,
+         text                   >= 0.11.2.3     && < 0.12,
+         transformers           == 0.3.*,
+         wai-middleware-static  >= 0.3.1        && < 0.4
+          
+    Main-is: Main.hs
+    Hs-Source-Dirs: .
+    Ghc-Options: -threaded
+    default-language:    Haskell2010
+
+
