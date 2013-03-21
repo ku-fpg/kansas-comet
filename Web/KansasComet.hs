@@ -12,7 +12,6 @@ module Web.KansasComet
 
 import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
 import Data.Aeson hiding ((.=))
-import Data.Aeson.Types hiding ((.=))
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
@@ -20,10 +19,7 @@ import Control.Monad.IO.Class
 import Paths_kansas_comet
 import qualified Data.Map as Map
 import Control.Concurrent
-import Control.Applicative
 import Data.Default
-import Data.List
-import Data.Semigroup
 import Data.Maybe ( fromJust )
 import qualified Data.HashMap.Strict as HashMap
 
@@ -179,18 +175,18 @@ getReply doc num = do
                       return r
 
 
--- 'Document' is the Handle into a specific interaction with a web page.
+-- | 'Document' is the Handle into a specific interaction with a web page.
 data Document = Document
         { sending   :: TMVar T.Text             -- ^ Code to be sent to the browser
                                                 -- This is a TMVar to stop the generation
                                                 -- getting ahead of the rendering engine
         , listening :: TVar (Map.Map Int Value) -- ^ This is numbered replies.
-        , secret    :: Int                      -- ^ the (session) number of this document
+        , _secret    :: Int                      -- ^ the (session) number of this document
         }
 
 -- 'Options' for Comet.
 data Options = Options
-        { prefix  :: String             -- ^ what is the prefix at at start of the URL (for example ajax)
+        { prefix  :: String             -- ^ what is the prefix at at start of the URL (for example \"ajax\")
         , verbose :: Int                -- ^ 0 == none, 1 == inits, 2 == cmds done, 3 == complete log
         }
 
@@ -208,7 +204,7 @@ debugDocument :: IO Document
 debugDocument = do
   picture <- atomically $ newEmptyTMVar
   callbacks <- atomically $ newTVar $ Map.empty
-  forkIO $ forever $ do
+  _ <- forkIO $ forever $ do
           res <- atomically $ takeTMVar $ picture
           putStrLn $ "Sending: " ++ show res
   return $ Document picture callbacks 0
