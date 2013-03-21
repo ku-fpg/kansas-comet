@@ -33,8 +33,8 @@ import Data.Time.Calendar
 import Data.Time.Clock
 import Numeric
 
--- | connect "/foobar" (...) gives
-
+-- | connect "/foobar" (...) gives a scotty session that:
+--
 -- >  POST http://.../foobar/                       <- bootstrap the interaction
 -- >  GET  http://.../foobar/act/<id#>/<act#>       <- get a specific action
 -- >  POST http://.../foobar/reply/<id#>/<reply#>   <- send a reply as a JSON object
@@ -153,14 +153,13 @@ connect opt callback = do
 
    return ()
 
--- 'kCometPlugin' provide access to the Kansas Comet jQuery plugin. The argument
--- is the path to the collection that holds the static javascript files.
+-- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
 kCometPlugin :: IO String
 kCometPlugin = do
         dataDir <- getDataDir
         return $ dataDir ++ "/static/js/kansas-comet.js"
 
--- 'send' sends a javascript fragement to a document.
+-- | 'send' sends a javascript fragement to a document.
 -- The string argument will be evaluated before sending (in case there is an error,
 -- or some costly evaluation needs done first).
 -- 'send' suspends the thread if the last javascript has not been *dispatched*
@@ -168,7 +167,7 @@ kCometPlugin = do
 send :: Document -> String -> IO ()
 send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 
--- | wait for a virtual-to-this-document's port number's reply.
+-- | wait for a virtual-to-this-document's port numbers' reply.
 getReply :: Document -> Int -> IO Value
 getReply doc num = do
         atomically $ do
@@ -180,6 +179,7 @@ getReply doc num = do
                       return r
 
 
+-- 'Document' is the Handle into a specific interaction with a web page.
 data Document = Document
         { sending   :: TMVar T.Text             -- ^ Code to be sent to the browser
                                                 -- This is a TMVar to stop the generation
@@ -188,10 +188,10 @@ data Document = Document
         , secret    :: Int                      -- ^ the (session) number of this document
         }
 
-
+-- 'Options' for Comet.
 data Options = Options
-        { prefix  :: String
-        , verbose :: Int                -- 0 == none, 1 == inits, 2 == cmds done, 3 == complete log
+        { prefix  :: String             -- ^ what is the prefix at at start of the URL (for example ajax)
+        , verbose :: Int                -- ^ 0 == none, 1 == inits, 2 == cmds done, 3 == complete log
         }
 
 instance Default Options where
@@ -203,6 +203,7 @@ instance Default Options where
 
 ------------------------------------------------------------------------------------
 
+-- | Generate a @Document@ that prints what is would send to the server.
 debugDocument :: IO Document
 debugDocument = do
   picture <- atomically $ newEmptyTMVar
@@ -210,10 +211,9 @@ debugDocument = do
   forkIO $ forever $ do
           res <- atomically $ takeTMVar $ picture
           putStrLn $ "Sending: " ++ show res
-
-
   return $ Document picture callbacks 0
 
+-- | Fake a specific reply on a virtual @Document@ port.
 debugReplyDocument :: Document -> Int -> Value -> IO ()
 debugReplyDocument doc uq val = atomically $ do
    m <- readTVar (listening doc)
