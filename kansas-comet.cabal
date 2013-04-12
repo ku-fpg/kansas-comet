@@ -13,7 +13,7 @@ Stability:           experimental
 Build-type:          Simple
 Cabal-version:       >= 1.10
 Description:
-  A transport level remote JavaScript RESTful push mechanism.
+  A transport-level remote JavaScript RESTful push mechanism.
 
 data-files:
     static/js/kansas-comet.js
