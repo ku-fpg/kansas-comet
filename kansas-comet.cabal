@@ -1,5 +1,5 @@
 Name:                kansas-comet
-Version:             0.2
+Version:             0.2.1
 Synopsis:            A JavaScript push mechanism based on the comet idiom
 Homepage:            https://github.com/ku-fpg/kansas-comet/
 Bug-reports:         https://github.com/ku-fpg/kansas-comet/
@@ -27,10 +27,10 @@ Library
                        aeson            == 0.6.*,
                        containers       == 0.5.*,
                        data-default     == 0.5.*,
-                       scotty           >= 0.4.3        && < 0.5,
+                       scotty           >= 0.7.2        && < 0.8,
                        stm              >= 2.2          && < 3.0,
                        transformers     == 0.3.*,
-                       text             == 0.11.*,
+                       text             == 1.1.*,
                        time             == 1.4.*
 
 -- text is needed just for scotty's literal

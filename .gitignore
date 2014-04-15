@@ -5,3 +5,8 @@ dist/*
 *.swp
 *.swo
 .DS_Store
+example/dist/*
+*#
+.#*
+
+

@@ -10,7 +10,7 @@ module Web.KansasComet
     , debugReplyDocument
     ) where
 
-import Web.Scotty (ScottyM, text, post, capture, param, header, get, ActionM, jsonData)
+import Web.Scotty (ScottyM, text, post, capture, param, setHeader, get, ActionM, jsonData)
 import Data.Aeson hiding ((.=))
 import Control.Monad
 import Control.Concurrent.STM as STM
@@ -83,7 +83,7 @@ connect opt callback = do
 
 --   liftIO $ print $ prefix opt ++ "/act/:id/:act"
    get (capture $ prefix opt ++ "/act/" ++ server_id ++ "/:id/:act") $ do
-            header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
+            setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
             -- do something and return a new list of commands to the client
             num <- param "id"
 
@@ -121,7 +121,7 @@ connect opt callback = do
 
 
    post (capture $ prefix opt ++ "/reply/" ++ server_id ++ "/:id/:uq") $ do
-           header "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
+           setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
            num <- param "id"
            uq :: Int <- param "uq"
            --liftIO $ print (num :: Int, event :: String)
