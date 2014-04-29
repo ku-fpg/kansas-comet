@@ -3,7 +3,7 @@
    var the_prefix = "";
    var kansascomet_session;
    var kansascomet_server;
-   var eventQueues = {};   // TODO: add the use of the queue
+   var eventQueues = {};
    var eventCallbacks = {};
    var please_debug = false;
 
