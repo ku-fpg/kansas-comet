@@ -187,19 +187,19 @@ data Document = Document
 -- 'Options' for Comet.
 data Options = Options
         { prefix  :: String             -- ^ what is the prefix at at start of the URL (for example \"ajax\")
-        , verbose :: Int                -- ^ 0 == none, 1 == inits, 2 == cmds done, 3 == complete log
+        , verbose :: Int                -- ^ 0 == none (default), 1 == inits, 2 == cmds done, 3 == complete log
         }
 
 instance Default Options where
   def = Options
         { prefix = ""                   -- default to root, this assumes single page, etc.
-        , verbose = 1
+        , verbose = 0
         }
 
 
 ------------------------------------------------------------------------------------
 
--- | Generate a @Document@ that prints what is would send to the server.
+-- | Generate a @Document@ that prints what it would send to the server.
 debugDocument :: IO Document
 debugDocument = do
   picture <- atomically $ newEmptyTMVar
