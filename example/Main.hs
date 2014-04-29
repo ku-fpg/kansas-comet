@@ -45,12 +45,12 @@ web_app :: Document -> IO ()
 web_app doc = do
     send doc $ unlines
         [ "$('body').on('slide', '.slide', function (event,aux) {"
-        , "$.kc.reply(0,{eventname: 'slide', count: aux.value });"
+        , "$.kc.event({eventname: 'slide', count: aux.value });"
         , "});"
         ]
     send doc $ unlines
         [ "$('body').on('click', '.click', function (event,aux) {"
-        , "$.kc.reply(0,{eventname: 'click', id: $(this).attr('id'), pageX: event.pageX, pageY: event.pageY });"
+        , "$.kc.event({eventname: 'click', id: $(this).attr('id'), pageX: event.pageX, pageY: event.pageY });"
         , "});"
         ]
     forkIO $ control doc 0
@@ -58,7 +58,7 @@ web_app doc = do
 
 control :: Document -> Int -> IO ()
 control doc model = do
-    res <- getReply doc 0
+    res <- atomically $ readTChan (eventQueue doc)
     case parse parseEvent res of
            Success evt -> case evt of
                    Slide n                        -> view doc n

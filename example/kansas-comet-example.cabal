@@ -23,8 +23,8 @@ Executable kansas-comet
     Other-Modules:       Paths_kansas_comet_example
     Build-Depends: 
          base                   >= 4.6          && < 5,
-         kansas-comet           == 0.2,
-         aeson                  >= 0.6.1        && < 0.7,
+         kansas-comet           == 0.2.2,
+         aeson                  == 0.7.*,
          scotty                 >= 0.7.2        && < 0.8,
          containers             == 0.5.*,
          data-default           == 0.5.*,
