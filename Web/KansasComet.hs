@@ -6,8 +6,10 @@ module Web.KansasComet
     , Document
     , Options(..)
     , getReply
+    , eventQueue
     , debugDocument
     , debugReplyDocument
+    , defaultOptions
     ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, setHeader, get, ActionM, jsonData)
@@ -65,7 +67,8 @@ connect opt callback = do
             uq <- getUniq
             picture <- atomically $ newEmptyTMVar
             callbacks <- atomically $ newTVar $ Map.empty
-            let cxt = Document picture callbacks uq
+            queue <- atomically $ newTChan
+            let cxt = Document picture callbacks queue uq
             liftIO $ atomically $ do
                     db <- readTVar contextDB
                     -- assumes the getUniq is actually unique
@@ -143,10 +146,35 @@ connect opt callback = do
                Just doc -> do
                    liftIO $ do
                          atomically $ do
-                           m <- readTVar (listening doc)
-                           writeTVar (listening doc) $ Map.insert uq val m
+                           m <- readTVar (replies doc)
+                           writeTVar (replies doc) $ Map.insert uq val m
                    text $ LT.pack ""
 
+
+   post (capture $ prefix opt ++ "/event/" ++ server_id ++ "/:id") $ do
+           setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
+           num <- param "id"
+
+           when (verbose opt >= 2) $ liftIO $ putStrLn $
+                "Kansas Comet: post .../event/" ++ show num 
+
+           wrappedVal :: Value <- jsonData
+           -- Unwrap the data wrapped, because 'jsonData' only supports
+           -- objects or arrays, but not primitive values like numbers
+           -- or booleans.
+           let val = fromJust $ let (Object m) = wrappedVal
+                                in HashMap.lookup (T.pack "data") m
+           --liftIO $ print (val :: Value)
+
+           db <- liftIO $ atomically $ readTVar contextDB
+           case Map.lookup num db of
+               Nothing  -> do
+                   text (LT.pack $ "console.warn('Ignore reply for session #" ++ show num ++ "');")
+               Just doc -> do
+                   liftIO $ atomically $ do
+                           writeTChan (eventQueue doc) val
+                   text $ LT.pack ""
+           
    return ()
 
 -- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
@@ -167,20 +195,20 @@ send doc js = atomically $ putTMVar (sending doc) $! T.pack js
 getReply :: Document -> Int -> IO Value
 getReply doc num = do
         atomically $ do
-           db <- readTVar (listening doc)
+           db <- readTVar (replies doc)
            case Map.lookup num db of
               Nothing -> retry
               Just r -> do
-                      writeTVar (listening doc) $ Map.delete num db
+                      writeTVar (replies doc) $ Map.delete num db
                       return r
-
 
 -- | 'Document' is the Handle into a specific interaction with a web page.
 data Document = Document
-        { sending   :: TMVar T.Text             -- ^ Code to be sent to the browser
-                                                -- This is a TMVar to stop the generation
-                                                -- getting ahead of the rendering engine
-        , listening :: TVar (Map.Map Int Value) -- ^ This is numbered replies.
+        { sending    :: TMVar T.Text             -- ^ Code to be sent to the browser
+                                                 -- This is a TMVar to stop the generation
+                                                 -- getting ahead of the rendering engine
+        , replies    :: TVar (Map.Map Int Value) -- ^ This is numbered replies, to ports
+        , eventQueue :: TChan Value              -- ^ Events being sent
         , _secret    :: Int                      -- ^ the (session) number of this document
         }
 
@@ -197,6 +225,10 @@ instance Default Options where
         }
 
 
+-- Defaults for 'Options'. Or you can use the defaults package.
+defaultOptions :: Options
+defaultOptions = def
+
 ------------------------------------------------------------------------------------
 
 -- | Generate a @Document@ that prints what it would send to the server.
@@ -207,11 +239,12 @@ debugDocument = do
   _ <- forkIO $ forever $ do
           res <- atomically $ takeTMVar $ picture
           putStrLn $ "Sending: " ++ show res
-  return $ Document picture callbacks 0
+  q <- atomically $ newTChan
+  return $ Document picture callbacks q 0
 
 -- | Fake a specific reply on a virtual @Document@ port.
 debugReplyDocument :: Document -> Int -> Value -> IO ()
 debugReplyDocument doc uq val = atomically $ do
-   m <- readTVar (listening doc)
-   writeTVar (listening doc) $ Map.insert uq val m
+   m <- readTVar (replies doc)
+   writeTVar (replies doc) $ Map.insert uq val m
 

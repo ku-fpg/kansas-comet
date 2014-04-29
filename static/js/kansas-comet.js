@@ -57,6 +57,7 @@
              });
                // TODO: Add failure; could happen
         },
+   // TODO: move register, send & waitFor into different library
    // This says someone is listening on a specific event
    // The full event name is "scope/eventname", for example
    // "body/click"
@@ -134,7 +135,22 @@
                     data: "{ \"data\": " + $.toJSON(obj) + " }",
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"});
-   }
+   },
+   event: function (obj) {
+      debug('event(' + $.toJSON(obj) + ')');
+           $.ajax({ url: the_prefix + "/event/" + kansascomet_server + "/" + kansascomet_session,
+                    type: "POST",
+                    // This wrapper is needed because the JSON parser
+                    // used on the Haskell side only supports objects
+                    // and arrays. But the returned data might be just
+                    // a number or a boolean. So this wrapper keeps 
+                    // the value safe to parse and has to be unwrapped 
+                    // on server side. Formatting it as string is also
+                    // important for some reason.
+                    data: "{ \"data\": " + $.toJSON(obj) + " }",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"});
+   }    
      };
 })(jQuery);
 
