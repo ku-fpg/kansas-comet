@@ -8,7 +8,7 @@ import Data.Aeson as A hiding ((.=))
 import Data.Aeson.Types as AP hiding ((.=))
 import qualified Web.Scotty as Scotty
 import Web.Scotty (scotty, get, file, literal, middleware)
-import Web.KansasComet as KC
+import Web.Scotty.Comet as KC
 import Data.Default
 import Data.Map (Map)
 import Control.Monad
@@ -43,12 +43,12 @@ opts = def { prefix = "/example", verbose = 3 }
 -- This is run each time the page is first accessed
 web_app :: Document -> IO ()
 web_app doc = do
-    send doc $ unlines
+    send doc $ T.unlines
         [ "$('body').on('slide', '.slide', function (event,aux) {"
         , "$.kc.event({eventname: 'slide', count: aux.value });"
         , "});"
         ]
-    send doc $ unlines
+    send doc $ T.unlines
         [ "$('body').on('click', '.click', function (event,aux) {"
         , "$.kc.event({eventname: 'click', id: $(this).attr('id'), pageX: event.pageX, pageY: event.pageY });"
         , "});"
@@ -70,12 +70,12 @@ control doc model = do
 
 view :: Document -> Int -> IO ()
 view doc n = do
-    send doc $ concat
-                [ "$('#slider').slider('value'," ++ show n ++ ");"
-                , "$('#fib-out').html('fib " ++ show n ++ " = ...')"
+    send doc $ T.unlines
+                [ "$('#slider').slider('value'," <> T.pack(show n) <> ");"
+                , "$('#fib-out').html('fib " <> T.pack(show n) <> " = ...')"
                 ]
     -- sent a 2nd packet, because it will take time to compute fib
-    send doc ("$('#fib-out').text('fib " ++ show n ++ " = " ++ show (fib n) ++ "')")
+    send doc ("$('#fib-out').text('fib " <> T.pack(show n) <> " = " <> T.pack(show (fib n)) <> "')")
 
     control doc n
 

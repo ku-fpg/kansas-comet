@@ -1,5 +1,5 @@
 Name:                kansas-comet-example
-Version:             0.2.2
+Version:             0.3.0
 Synopsis:            Example of Kansas Comet
 License:             BSD3
 Copyright:           (c) 2013 The University of Kansas
@@ -19,20 +19,20 @@ data-files:
 -- And the individual tests' index files.
     index.html
 
-Executable kansas-comet
+Executable kansas-comet-example
     Other-Modules:       Paths_kansas_comet_example
     Build-Depends: 
          base                   >= 4.6          && < 5,
-         kansas-comet           == 0.2.2,
+         kansas-comet           == 0.3.0,
          aeson                  == 0.7.*,
-         scotty                 >= 0.7.2        && < 0.8,
+         scotty                 == 0.8.*,
          containers             == 0.5.*,
          data-default           == 0.5.*,
          semigroups             >= 0.13,
          stm                    >= 2.4.2        && < 2.5,
-         text                   >= 0.11.2.3,
+         text                   == 1.1.*,
          transformers           == 0.3.*,
-         wai-middleware-static  >= 0.5.0        && < 0.6
+         wai-middleware-static  >= 0.6.0        && < 0.7
           
     Main-is: Main.hs
     Hs-Source-Dirs: .

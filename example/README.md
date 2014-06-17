@@ -3,9 +3,9 @@ this directory.
 
 % cabal configure
 % cabal build 
-% ./dist/build/kansas-comet/kansas-comet
+% ./dist/build/kansas-comet-example/kansas-comet-example
 
-The open
+Then open
 
         localhost:3000
         
