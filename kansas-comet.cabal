@@ -1,5 +1,5 @@
 Name:                kansas-comet
-Version:             0.2.2
+Version:             0.3.0
 Synopsis:            A JavaScript push mechanism based on the comet idiom
 Homepage:            https://github.com/ku-fpg/kansas-comet/
 Bug-reports:         https://github.com/ku-fpg/kansas-comet/
@@ -22,18 +22,16 @@ Library
   Exposed-modules:     Web.KansasComet
   other-modules:       Paths_kansas_comet
   default-language:    Haskell2010
-  build-depends:       base             >= 4.5          && <= 4.8,
+  build-depends:       base             >= 4.6          && <= 4.8,
                        unordered-containers >= 0.2.3    && <= 0.2.4.0,
                        aeson            == 0.7.*,
                        containers       == 0.5.*,
                        data-default     == 0.5.*,
-                       scotty           >= 0.7.2        && <= 0.7.2,
+                       scotty           == 0.8.*,
                        stm              >= 2.2          && <= 2.4.3,
                        transformers     == 0.3.*,
                        text             == 1.1.*,
                        time             == 1.4.*
-
--- text is needed just for scotty's literal
 
   GHC-options: -Wall -fno-warn-orphans
 

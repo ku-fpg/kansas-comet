@@ -112,10 +112,10 @@ connect opt callback = do
                     case res of
                      Just js -> do
 --                            liftIO $ putStrLn $ show js
-                            text $ LT.pack $ T.unpack js
+                            text $ LT.fromChunks [js]
                      Nothing  ->
                             -- give the browser something to do (approx every 3 seconds)
-                            text (LT.pack "")
+                            text LT.empty
 
             db <- liftIO $ atomically $ readTVar contextDB
             case Map.lookup num db of
@@ -184,12 +184,12 @@ kCometPlugin = do
         return $ dataDir ++ "/static/js/kansas-comet.js"
 
 -- | 'send' sends a javascript fragement to a document.
--- The string argument will be evaluated before sending (in case there is an error,
+-- The Text argument will be evaluated before sending (in case there is an error,
 -- or some costly evaluation needs done first).
 -- 'send' suspends the thread if the last javascript has not been *dispatched*
 -- the the browser.
-send :: Document -> String -> IO ()
-send doc js = atomically $ putTMVar (sending doc) $! T.pack js
+send :: Document -> T.Text -> IO ()
+send doc js = atomically $ putTMVar (sending doc) $! js
 
 -- | wait for a virtual-to-this-document's port numbers' reply.
 getReply :: Document -> Int -> IO Value
