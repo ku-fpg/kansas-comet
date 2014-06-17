@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
-module Web.KansasComet
+module Web.Scotty.Comet
     ( connect
     , kCometPlugin
     , send
