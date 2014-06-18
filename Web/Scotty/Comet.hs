@@ -24,7 +24,7 @@ import Control.Concurrent
 import Data.Default
 import Data.Maybe ( fromJust )
 import qualified Data.HashMap.Strict as HashMap
-
+import System.Exit
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
 import Data.Time.Calendar
@@ -41,6 +41,12 @@ connect :: Options             -- ^ URL path prefix for this page
         -> (Document -> IO ()) -- ^ called for access of the page
         -> ScottyM ()
 connect opt callback = do
+   if not rtsSupportsBoundThreads  -- we need the -threaded flag turned on
+   then liftIO $ do putStrLn "Application needs to be re-compiled with -threaded flag"
+                    exitFailure
+   else return ()                 
+                  
+          
    when (verbose opt >= 1) $ liftIO $ putStrLn $ "kansas-comet connect with prefix=" ++ show (prefix opt)
 
    -- A unique number generator, or ephemeral generator.
