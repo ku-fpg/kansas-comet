@@ -6,12 +6,14 @@
    var eventQueues = {};
    var eventCallbacks = {};
    var please_debug = false;
+   var socketConnection = null;
+
 
    var debug = function () { };
 
    var failure_callback = function(ig,ty,msg,re) {
-		console.error("redraw failed (retrying) : " + ig + "," + ty + "," + msg);
-	}
+    console.error("redraw failed (retrying) : " + ig + "," + ty + "," + msg);
+   };
 
    $.kc = {
    // If we want to debug, then add a true
@@ -19,17 +21,37 @@
       the_prefix = prefix;
       // if there is a ?debug=0, then send debug messages to it
      if (window.location.search == '?debug=1')  {
-	console.log("using logging to console for " + prefix);
+         console.log("using logging to console for " + prefix);
          debug = function(arg) {
-	    console.log(arg);
+            console.log(arg);
          };
       }
-
-          $.ajax({ url: the_prefix,
+      // If browser supports websocket use websocket else fallback on comet
+      if (window.WebSocket) {
+         var loc     = window.location,
+             new_uri = null;
+         if (loc.protocol === "https:") {
+            new_uri = "wss:";
+         } else {
+            new_uri = "ws:";
+         }
+         new_uri += "//" + loc.host;
+         socketConnection = new WebSocket(new_uri);
+         socketConnection.onopen = function (event) {
+            socketConnection.send("handShakeComplete");
+         };
+         socketConnection.onmessage = function (event) {
+           // Expecting data inform of script and executing on client side.
+           eval(event.data);
+         };
+      }
+      else {
+        $.ajax({ url: the_prefix,
                     type: "POST",
                     data: "",
                     dataType: "script"});
       debug('connect(' + prefix + ')');
+    }
    },
 
    session: function(server_id, session_id) {
@@ -42,7 +64,7 @@
 
    // Set failure behavior
    failure: function(f) {
-	failure_callback = f;
+  failure_callback = f;
    },
 
    redraw: function (count) {
@@ -51,9 +73,9 @@
                   type: "GET",
                   dataType: "script",
                   success: function success() { $.kc.redraw(count + 1); },
-		  error: function failure(ig,ty,msg) { 
-			failure_callback(ig,ty,msg,function() { $.kc.redraw(count + 1); });
-		  }
+      error: function failure(ig,ty,msg) {
+      failure_callback(ig,ty,msg,function() { $.kc.redraw(count + 1); });
+      }
              });
                // TODO: Add failure; could happen
         },
@@ -65,31 +87,31 @@
       debug('register(' + scope + ',' + eventname + ')');
       var fulleventname = scope + "/" + eventname;
            eventQueues[fulleventname] = [];
-	   if (fn == null) {
-	       // no special setup required, because no callback to call.
-	   } else {
+     if (fn == null) {
+         // no special setup required, because no callback to call.
+     } else {
                $(scope).on(eventname, "." + eventname, function (event,aux) {
                   var e = fn(this,event,aux);
                   debug('{callback}on(' + eventname + ')');
                   e.eventname = eventname;
                   $.kc.send(fulleventname,e);
               });
-	   }
+     }
    },
 
    send: function (fulleventname, event) {
       debug('send(' + fulleventname + ')');
       if (eventCallbacks[fulleventname] == undefined) {
-      		if (eventQueues[fulleventname] != undefined) { 
+          if (eventQueues[fulleventname] != undefined) {
                    eventQueues[fulleventname].push(event);
-		} else {
-      		     debug('send(' + fulleventname + ') not sent (no one listening)');
-		}
+    } else {
+               debug('send(' + fulleventname + ') not sent (no one listening)');
+    }
            } else {
                    eventCallbacks[fulleventname](event);
            }
    },
-   
+
    // This waits for (full) named event(s). The second argument is the continuation
    waitFor: function (scope, eventnames, fn) {
       debug('waitFor(' + scope + ',' + eventnames + ')');
@@ -100,7 +122,7 @@
             // call with event from queue
             fn(e);
             // and we are done
-            return;   
+            return;
          }
          if (eventCallbacks[prefixScope(eventnames[eventname])] != undefined) {
                  alert("ABORT: event queue callback failure for " + eventname);
@@ -128,8 +150,8 @@
                     // This wrapper is needed because the JSON parser
                     // used on the Haskell side only supports objects
                     // and arrays. But the returned data might be just
-                    // a number or a boolean. So this wrapper keeps 
-                    // the value safe to parse and has to be unwrapped 
+                    // a number or a boolean. So this wrapper keeps
+                    // the value safe to parse and has to be unwrapped
                     // on server side. Formatting it as string is also
                     // important for some reason.
                     data: "{ \"data\": " + $.toJSON(obj) + " }",
@@ -137,24 +159,25 @@
                     dataType: "json"});
    },
    event: function (obj) {
+     if(socketConnection) {
+       socketConnection.send($.toJSON(obj));
+     }
+     else{
       debug('event(' + $.toJSON(obj) + ')');
-           $.ajax({ url: the_prefix + "/event/" + kansascomet_server + "/" + kansascomet_session,
-                    type: "POST",
-                    // This wrapper is needed because the JSON parser
-                    // used on the Haskell side only supports objects
-                    // and arrays. But the returned data might be just
-                    // a number or a boolean. So this wrapper keeps 
-                    // the value safe to parse and has to be unwrapped 
-                    // on server side. Formatting it as string is also
-                    // important for some reason.
-                    data: "{ \"data\": " + $.toJSON(obj) + " }",
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json"});
-   }    
-     };
+      $.ajax({ url: the_prefix + "/event/" + kansascomet_server + "/" + kansascomet_session,
+               type: "POST",
+               // This wrapper is needed because the JSON parser
+               // used on the Haskell side only supports objects
+               // and arrays. But the returned data might be just
+               // a number or a boolean. So this wrapper keeps
+               // the value safe to parse and has to be unwrapped
+               // on server side. Formatting it as string is also
+               // important for some reason.
+               data: "{ \"data\": " + $.toJSON(obj) + " }",
+               contentType: "application/json; charset=utf-8",
+               dataType: "json"});
+     }
+
+   }
+};
 })(jQuery);
-
-
-
-
-
