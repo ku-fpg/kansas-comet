@@ -10,6 +10,7 @@ module Web.Scotty.Comet
     , debugDocument
     , debugReplyDocument
     , defaultOptions
+    , socketApplication
     ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, setHeader, get, ActionM, jsonData)
@@ -30,6 +31,47 @@ import qualified Data.Text      as T
 import Data.Time.Calendar
 import Data.Time.Clock
 import Numeric
+import qualified Network.WebSockets as WS
+
+-- Opening web-socket connection and handling calling the call-back function
+-- Adding websocket connection to Docuement object
+
+socketApplication :: (Document -> IO ()) -> WS.PendingConnection -> IO ()
+socketApplication callback pending = do
+    conn <- WS.acceptRequest pending
+    evnt::T.Text <- WS.receiveData conn
+    picture <- atomically $ newEmptyTMVar
+    callbacks <- atomically $ newTVar $ Map.empty
+    queue <- atomically $ newTChan
+    let cxt = Document picture callbacks queue 0 (Just conn)
+    _ <- forkIO $ callback cxt
+    receiveEvents conn cxt
+
+-- Continuously listening to incoming socket connection
+
+receiveEvents :: WS.Connection -> Document -> IO()
+receiveEvents conn document = forever $ do
+          --  WS.sendPing conn (BC.pack "ping")
+            evnt <- WS.receiveData conn
+            let wrappedVal = fromJust $ decode' evnt
+            let (Object m) = wrappedVal
+            let val = HashMap.lookup (T.pack "reply") m
+            let uq = HashMap.lookup (T.pack "uq") m
+            case val of
+                Nothing  -> liftIO $ atomically $ do
+                                      let pingval = HashMap.lookup (T.pack "ping") m
+                                      case pingval of
+                                          Nothing -> writeTChan (eventQueue document) wrappedVal
+                                          Just _ -> return ()
+
+                Just replyval -> liftIO $ atomically $ do
+                                      case uq of
+                                          Nothing ->   return ()
+                                          Just uqVal -> do
+                                                        repliesMap <- readTVar (replies document)
+                                                        case fromJSON uqVal of
+                                                          Error msg -> fail msg
+                                                          Success a -> writeTVar (replies document) $ Map.insert a replyval repliesMap
 
 -- | connect "/foobar" (...) gives a scotty session that:
 --
@@ -44,9 +86,9 @@ connect opt callback = do
    if not rtsSupportsBoundThreads  -- we need the -threaded flag turned on
    then liftIO $ do putStrLn "Application needs to be re-compiled with -threaded flag"
                     exitFailure
-   else return ()                 
-                  
-          
+   else return ()
+
+
    when (verbose opt >= 1) $ liftIO $ putStrLn $ "kansas-comet connect with prefix=" ++ show (prefix opt)
 
    -- A unique number generator, or ephemeral generator.
@@ -74,7 +116,7 @@ connect opt callback = do
             picture <- atomically $ newEmptyTMVar
             callbacks <- atomically $ newTVar $ Map.empty
             queue <- atomically $ newTChan
-            let cxt = Document picture callbacks queue uq
+            let cxt = Document picture callbacks queue uq Nothing
             liftIO $ atomically $ do
                     db <- readTVar contextDB
                     -- assumes the getUniq is actually unique
@@ -139,6 +181,7 @@ connect opt callback = do
                 "Kansas Comet: post .../reply/" ++ show num ++ "/" ++ show uq
 
            wrappedVal :: Value <- jsonData
+    --       liftIO $ putStrLn $ show wrappedVal
            -- Unwrap the data wrapped, because 'jsonData' only supports
            -- objects or arrays, but not primitive values like numbers
            -- or booleans.
@@ -162,7 +205,7 @@ connect opt callback = do
            num <- param "id"
 
            when (verbose opt >= 2) $ liftIO $ putStrLn $
-                "Kansas Comet: post .../event/" ++ show num 
+                "Kansas Comet: post .../event/" ++ show num
 
            wrappedVal :: Value <- jsonData
            -- Unwrap the data wrapped, because 'jsonData' only supports
@@ -180,7 +223,7 @@ connect opt callback = do
                    liftIO $ atomically $ do
                            writeTChan (eventQueue doc) val
                    text $ LT.pack ""
-           
+
    return ()
 
 -- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
@@ -190,12 +233,17 @@ kCometPlugin = do
         return $ dataDir ++ "/static/js/kansas-comet.js"
 
 -- | 'send' sends a javascript fragement to a document.
+-- Checks for socket connection if present uses socket connection to send the document.
 -- The Text argument will be evaluated before sending (in case there is an error,
 -- or some costly evaluation needs done first).
 -- 'send' suspends the thread if the last javascript has not been *dispatched*
 -- the the browser.
 send :: Document -> T.Text -> IO ()
-send doc js = atomically $ putTMVar (sending doc) $! js
+send doc js = do
+  case (socketConnection doc) of
+    Just connection -> WS.sendTextData connection $ js
+    Nothing -> atomically $ putTMVar (sending doc) $! js
+
 
 -- | wait for a virtual-to-this-document's port numbers' reply.
 getReply :: Document -> Int -> IO Value
@@ -210,12 +258,13 @@ getReply doc num = do
 
 -- | 'Document' is the Handle into a specific interaction with a web page.
 data Document = Document
-        { sending    :: TMVar T.Text             -- ^ Code to be sent to the browser
-                                                 -- This is a TMVar to stop the generation
-                                                 -- getting ahead of the rendering engine
-        , replies    :: TVar (Map.Map Int Value) -- ^ This is numbered replies, to ports
-        , eventQueue :: TChan Value              -- ^ Events being sent
-        , _secret    :: Int                      -- ^ the (session) number of this document
+        { sending          :: TMVar T.Text             -- ^ Code to be sent to the browser
+                                                       -- This is a TMVar to stop the generation
+                                                       -- getting ahead of the rendering engine
+        , replies          :: TVar (Map.Map Int Value) -- ^ This is numbered replies, to ports
+        , eventQueue       :: TChan Value              -- ^ Events being sent
+        , _secret          :: Int                      -- ^ the (session) number of this document
+        , socketConnection :: Maybe (WS.Connection)    -- Socket connection if cleint is using websocket
         }
 
 -- 'Options' for Comet.
@@ -246,11 +295,10 @@ debugDocument = do
           res <- atomically $ takeTMVar $ picture
           putStrLn $ "Sending: " ++ show res
   q <- atomically $ newTChan
-  return $ Document picture callbacks q 0
+  return $ Document picture callbacks q 0 Nothing
 
 -- | Fake a specific reply on a virtual @Document@ port.
 debugReplyDocument :: Document -> Int -> Value -> IO ()
 debugReplyDocument doc uq val = atomically $ do
    m <- readTVar (replies doc)
    writeTVar (replies doc) $ Map.insert uq val m
-
