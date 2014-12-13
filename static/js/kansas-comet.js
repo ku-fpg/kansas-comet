@@ -165,7 +165,6 @@
    // There is a requirement that obj be an object or array.
    // See RFC 4627 for details.
    reply: function (uq,obj) {
-      console.log("IN reply" + uq + obj);
       if(serverSocketSupport && browserSocketSupport) {
         socketConnection.send("{ \"reply\": " + $.toJSON(obj) + ", \"uq\": "+uq+" }");
       }

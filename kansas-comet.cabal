@@ -32,8 +32,7 @@ Library
                        time                 >= 1.4   && < 1.6,
                        transformers         >= 0.3   && < 0.5,
                        unordered-containers >= 0.2.3 && < 0.2.6,
-                       websockets            >= 0.8 && < 1.0,
-                       bytestring           == 0.10.*
+                       websockets            >= 0.8 && < 1.0
 
   GHC-options: -Wall -fno-warn-orphans
 

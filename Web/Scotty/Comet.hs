@@ -44,7 +44,7 @@ socketApplication callback pending = do
     callbacks <- atomically $ newTVar $ Map.empty
     queue <- atomically $ newTChan
     let cxt = Document picture callbacks queue 0 (Just conn)
-    forkIO $ callback cxt
+    _ <- forkIO $ callback cxt
     receiveEvents conn cxt
 
 -- Continuously listening to incoming socket connection
@@ -54,26 +54,24 @@ receiveEvents conn document = forever $ do
           --  WS.sendPing conn (BC.pack "ping")
             evnt <- WS.receiveData conn
             let wrappedVal = fromJust $ decode' evnt
-            let val =  let (Object m) = wrappedVal
-                       in HashMap.lookup (T.pack "reply") m
-            let uq =  let (Object m) = wrappedVal
-                       in HashMap.lookup (T.pack "uq") m
+            let (Object m) = wrappedVal
+            let val = HashMap.lookup (T.pack "reply") m
+            let uq = HashMap.lookup (T.pack "uq") m
             case val of
                 Nothing  -> liftIO $ atomically $ do
-                                      let pingval =  let (Object m) = wrappedVal
-                                                 in HashMap.lookup (T.pack "ping") m
+                                      let pingval = HashMap.lookup (T.pack "ping") m
                                       case pingval of
                                           Nothing -> writeTChan (eventQueue document) wrappedVal
-                                          Just pingvalue -> return ()
+                                          Just _ -> return ()
 
                 Just replyval -> liftIO $ atomically $ do
                                       case uq of
                                           Nothing ->   return ()
                                           Just uqVal -> do
-                                                        m <- readTVar (replies document)
+                                                        repliesMap <- readTVar (replies document)
                                                         case fromJSON uqVal of
                                                           Error msg -> fail msg
-                                                          Success a -> writeTVar (replies document) $ Map.insert a replyval m
+                                                          Success a -> writeTVar (replies document) $ Map.insert a replyval repliesMap
 
 -- | connect "/foobar" (...) gives a scotty session that:
 --
