@@ -1,4 +1,4 @@
 kansas-comet
 ============
 
- A javascript push mechanism and event listener support using websockets
+ A javascript push mechanism and event listener support

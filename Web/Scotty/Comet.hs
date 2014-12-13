@@ -32,7 +32,6 @@ import Data.Time.Calendar
 import Data.Time.Clock
 import Numeric
 import qualified Network.WebSockets as WS
-import qualified Data.ByteString.Char8         as BC
 
 -- Opening web-socket connection and handling calling the call-back function
 -- Adding websocket connection to Docuement object
@@ -48,7 +47,6 @@ socketApplication callback pending = do
     forkIO $ callback cxt
     receiveEvents conn cxt
 
-
 -- Continuously listening to incoming socket connection
 
 receiveEvents :: WS.Connection -> Document -> IO()
@@ -60,19 +58,13 @@ receiveEvents conn document = forever $ do
                        in HashMap.lookup (T.pack "reply") m
             let uq =  let (Object m) = wrappedVal
                        in HashMap.lookup (T.pack "uq") m
-
-            let pingvalout =  let (Object m) = wrappedVal
-                       in HashMap.lookup (T.pack "ping") m
-
-
-      --      putStrLn $ "ping: " ++ show pingvalout
             case val of
                 Nothing  -> liftIO $ atomically $ do
                                       let pingval =  let (Object m) = wrappedVal
                                                  in HashMap.lookup (T.pack "ping") m
                                       case pingval of
                                           Nothing -> writeTChan (eventQueue document) wrappedVal
-                                          Just pingval -> return ()
+                                          Just pingvalue -> return ()
 
                 Just replyval -> liftIO $ atomically $ do
                                       case uq of
@@ -82,12 +74,6 @@ receiveEvents conn document = forever $ do
                                                         case fromJSON uqVal of
                                                           Error msg -> fail msg
                                                           Success a -> writeTVar (replies document) $ Map.insert a replyval m
-                                                        --uqInt::Int <- uqVal
-
-
-
-
-
 
 -- | connect "/foobar" (...) gives a scotty session that:
 --
@@ -227,8 +213,6 @@ connect opt callback = do
            -- Unwrap the data wrapped, because 'jsonData' only supports
            -- objects or arrays, but not primitive values like numbers
            -- or booleans.
-
-
            let val = fromJust $ let (Object m) = wrappedVal
                                 in HashMap.lookup (T.pack "data") m
            --liftIO $ print (val :: Value)
@@ -258,8 +242,6 @@ kCometPlugin = do
 -- the the browser.
 send :: Document -> T.Text -> IO ()
 send doc js = do
-  --putStrLn "Comet send"
---  putStrLn $ show js
   case (socketConnection doc) of
     Just connection -> WS.sendTextData connection $ js
     Nothing -> atomically $ putTMVar (sending doc) $! js

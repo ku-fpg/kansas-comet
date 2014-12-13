@@ -47,7 +47,6 @@
           };
           socketConnection.onmessage = function (event) {
           // Expecting data inform of script and executing on client side.
-        //  console.log("inside receive messg!" + event.data);
             $.kc.pingServer();
             eval(event.data);
           };
@@ -59,7 +58,6 @@
                      data    : "",
                      dataType: "script"});
             debug('connect(' + prefix + ')');
-      //      console.log("On CLOSE !!");
            };
       }
       else if (!browserSocketSupport) {
@@ -74,7 +72,6 @@
    pingServer: function() {
      if (socketConnection) {
        socketConnection.send("{ \"ping\": " + "\"ping\"" +" }");
-    //   $.kc.pingServer();
      }
    },
 
