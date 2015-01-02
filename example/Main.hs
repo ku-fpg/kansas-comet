@@ -1,13 +1,10 @@
-{-# LANGUAGE CPP, OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
 
 -- Example of using Kansas Comet
 
 module Main (main) where
 
 import qualified Control.Applicative as A
-#if !(MIN_VERSION_base(4,8,0))
-import           Control.Applicative ((<*>))
-#endif
 import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad

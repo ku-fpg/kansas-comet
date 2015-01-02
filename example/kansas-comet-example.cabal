@@ -24,7 +24,6 @@ Executable kansas-comet-example
     Build-Depends:
          aeson                 >= 0.7   && < 0.9,
          base                  >= 4.6   && < 5,
-         containers            == 0.5.*,
          data-default          == 0.5.*,
          kansas-comet          == 0.3.1,
          scotty                >= 0.8   && < 0.10,
