@@ -1,30 +1,31 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
+{-# LANGUAGE CPP, OverloadedStrings, ScopedTypeVariables, KindSignatures, GADTs #-}
 
 -- Example of using Kansas Comet
 
-module Main where
+module Main (main) where
 
-import Data.Aeson as A hiding ((.=))
-import Data.Aeson.Types as AP hiding ((.=))
-import qualified Web.Scotty as Scotty
-import Web.Scotty (scotty, get, file, literal, middleware)
-import Web.Scotty.Comet as KC
-import Data.Default
-import Data.Map (Map)
-import Control.Monad
-import Control.Applicative ((<$>),(<*>))
 import qualified Control.Applicative as A
-import Control.Concurrent
-import Control.Concurrent.STM
-import Data.Semigroup
-import Data.List as L
-import Control.Monad.IO.Class
-import Network.Wai.Middleware.Static
--- import Network.Wai      -- TMP for debug
+#if !(MIN_VERSION_base(4,8,0))
+import           Control.Applicative ((<*>))
+#endif
+import           Control.Concurrent
+import           Control.Concurrent.STM
+import           Control.Monad
+import           Control.Monad.IO.Class
 
-import qualified Data.Text.Lazy as LT
+import           Data.Aeson as A hiding ((.=))
+import           Data.Aeson.Types as AP hiding ((.=))
+import           Data.Default
+import           Data.Semigroup
 import qualified Data.Text      as T
 
+-- import           Network.Wai      -- TMP for debug
+import           Network.Wai.Middleware.Static
+
+import           Web.Scotty.Comet as KC
+import           Web.Scotty (scotty, middleware)
+
+main :: IO ()
 main = scotty 3000 $ do
     kcomet <- liftIO kCometPlugin
 
@@ -53,7 +54,7 @@ web_app doc = do
         , "$.kc.event({eventname: 'click', id: $(this).attr('id'), pageX: event.pageX, pageY: event.pageY });"
         , "});"
         ]
-    forkIO $ control doc 0
+    void . forkIO $ control doc 0
     return ()
 
 control :: Document -> Int -> IO ()
@@ -79,8 +80,10 @@ view doc n = do
 
     control doc n
 
+fib :: Int -> Integer
 fib n = if n < 2 then 1 else fib (n-1) + fib (n-2)
 
+parseEvent :: Value -> Parser Event
 parseEvent (Object v) = (do
                 e :: String <- v .: "eventname"
                 n <- v .: "count"

@@ -36,7 +36,7 @@ Executable kansas-comet-example
           
     Main-is: Main.hs
     Hs-Source-Dirs: .
-    Ghc-Options: -threaded
+    Ghc-Options: -threaded -Wall
     default-language:    Haskell2010
 
 
