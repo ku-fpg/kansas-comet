@@ -11,6 +11,7 @@ data-files:
     js/jquery-json.js
     js/jquery-ui.js
     js/jquery.js
+    js/kansas-comet.js
 
 -- css
     css/ui-lightness/*.css 
