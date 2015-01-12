@@ -216,13 +216,13 @@ data Document = Document
         , replies    :: TVar (Map.Map Int Value) -- ^ This is numbered replies, to ports
         , eventQueue :: TChan Value              -- ^ Events being sent
         , _secret    :: Int                      -- ^ the (session) number of this document
-        }
+        } deriving Eq
 
 -- 'Options' for Comet.
 data Options = Options
         { prefix  :: String             -- ^ what is the prefix at at start of the URL (for example \"ajax\")
         , verbose :: Int                -- ^ 0 == none (default), 1 == inits, 2 == cmds done, 3 == complete log
-        }
+        } deriving (Eq, Ord, Show)
 
 instance Default Options where
   def = Options
