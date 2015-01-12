@@ -21,7 +21,7 @@ import Control.Monad.IO.Class
 import Paths_kansas_comet
 import qualified Data.Map as Map
 import Control.Concurrent
-import Data.Default
+import Data.Default.Class
 import Data.Maybe ( fromJust )
 import qualified Data.HashMap.Strict as HashMap
 import System.Exit
