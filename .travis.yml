@@ -13,4 +13,5 @@ install:
 script:
   - cabal configure
   - cabal build
+  - cabal install
   - ( cd example/ ; cabal install -j --only-dependencies ; cabal configure ; cabal build )
