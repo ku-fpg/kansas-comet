@@ -8,9 +8,9 @@ ghc:
 
 install:
   - cabal update
-  - cabal install . example/ -j --only-dependencies
+  - cabal install -j --only-dependencies
 
 script:
   - cabal configure
   - cabal build
-  - ( cd example/ ; cabal configure ; cabal build )
+  - ( cd example/ ; cabal install -j --only-dependencies ; cabal configure ; cabal build )
