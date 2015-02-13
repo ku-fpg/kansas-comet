@@ -12,7 +12,7 @@ import           Control.Monad.IO.Class
 
 import           Data.Aeson as A hiding ((.=))
 import           Data.Aeson.Types as AP hiding ((.=))
-import           Data.Default
+import           Data.Default.Class
 import           Data.Semigroup
 import qualified Data.Text      as T
 
