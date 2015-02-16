@@ -18,7 +18,7 @@ import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
 import Control.Monad.IO.Class
-import Paths_kansas_comet
+import Paths_kansas_comet (getDataFileName)
 import qualified Data.Map as Map
 import Control.Concurrent
 import Data.Default.Class
@@ -185,9 +185,7 @@ connect opt callback = do
 
 -- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
 kCometPlugin :: IO String
-kCometPlugin = do
-        dataDir <- getDataDir
-        return $ dataDir ++ "/static/js/kansas-comet.js"
+kCometPlugin = getDataFileName "static/js/kansas-comet.js"
 
 -- | 'send' sends a javascript fragement to a document.
 -- The Text argument will be evaluated before sending (in case there is an error,
