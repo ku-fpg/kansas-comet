@@ -8,7 +8,6 @@ import qualified Control.Applicative as A
 import           Control.Concurrent
 import           Control.Concurrent.STM
 import           Control.Monad
-import           Control.Monad.IO.Class
 
 import           Data.Aeson as A hiding ((.=))
 import           Data.Aeson.Types as AP hiding ((.=))
@@ -23,17 +22,19 @@ import           Web.Scotty.Comet as KC
 import           Web.Scotty (scotty, middleware)
 
 main :: IO ()
-main = scotty 3000 $ do
-    kcomet <- liftIO kCometPlugin
+main = do
+    kcomet <- kCometPlugin
 
     let pol = only [ ("","index.html")
                    , ("js/kansas-comet.js",kcomet)
                    ]
               <|> ((hasPrefix "css/" <|> hasPrefix "js/") >-> addBase ".")
 
-    middleware $ staticPolicy pol
+    connectApp <- connect opts web_app
 
-    connect opts web_app
+    scotty 3000 $ do
+        middleware $ staticPolicy pol
+        connectApp
 
 opts :: KC.Options
 opts = def { prefix = "/example", verbose = 3 }
