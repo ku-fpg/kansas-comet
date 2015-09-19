@@ -13,7 +13,7 @@ module Web.Scotty.Comet
     ) where
 
 import Web.Scotty (ScottyM, text, post, capture, param, setHeader, get, ActionM, jsonData)
-import Data.Aeson hiding ((.=))
+import Data.Aeson (Value(..))
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
