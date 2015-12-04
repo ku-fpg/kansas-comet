@@ -23,7 +23,7 @@ Library
   Exposed-modules:     Web.Scotty.Comet
   other-modules:       Paths_kansas_comet
   default-language:    Haskell2010
-  build-depends:       aeson                >= 0.7      && < 0.11,
+  build-depends:       aeson                >= 0.9      && < 0.11,
                        base                 >= 4.6      && < 4.9,
                        containers           >= 0.4      && < 0.6,
                        data-default-class   == 0.0.*,
@@ -35,6 +35,23 @@ Library
                        unordered-containers >= 0.2.3    && < 0.2.6
 
   GHC-options: -Wall
+
+test-suite test-kansas-comet
+  hs-source-dirs: example
+  main-is: Main.hs
+  type: exitcode-stdio-1.0
+  default-language:    Haskell2010
+  GHC-options: -Wall -threaded
+  build-depends:       base                 >= 4.6      && < 4.9,
+                       aeson                >= 0.9      && < 0.11,
+                       data-default-class   == 0.0.*,
+                       scotty               >= 0.10     && < 0.11,
+                       semigroups           == 0.18.*,
+                       stm                  >= 2.2      && < 2.5,
+                       text                 >= 0.11.3.1 && < 1.6,
+                       wai-middleware-static >= 0.6.0   && < 0.9,
+                       kansas-comet         == 0.4
+
 
 source-repository head
   type:     git
