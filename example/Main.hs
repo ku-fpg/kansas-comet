@@ -25,10 +25,10 @@ main :: IO ()
 main = do
     kcomet <- kCometPlugin
 
-    let pol = only [ ("","example/index.html")
-                   , ("example/js/kansas-comet.js",kcomet)
+    let pol = only [ ("","index.html")
+                   , ("js/kansas-comet.js",kcomet)
                    ]
-              <|> ((hasPrefix "css/" <|> hasPrefix "js/") >-> addBase "example/")
+              <|> ((hasPrefix "css/" <|> hasPrefix "js/") >-> addBase ".")
 
     connectApp <- connect opts web_app
 
