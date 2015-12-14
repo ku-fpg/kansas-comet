@@ -13,6 +13,9 @@ Stability:           beta
 Build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 Cabal-version:       >= 1.10
+tested-with:         GHC == 7.6.3
+                   , GHC == 7.8.4
+                   , GHC == 7.10.3
 Description:
   A transport-level remote JavaScript RESTful push mechanism.
 
