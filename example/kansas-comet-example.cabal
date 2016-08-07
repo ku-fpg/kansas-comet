@@ -24,7 +24,7 @@ data-files:
 Executable kansas-comet-example
     Other-Modules:       Paths_kansas_comet_example
     Build-Depends:     base                 >= 4.6      && < 4.10,
-                       aeson                >= 0.9      && < 0.12,
+                       aeson                >= 0.9      && < 1.1,
                        data-default-class   >= 0.0.1    && < 0.2,
                        scotty               >= 0.10     && < 0.12,
                        semigroups           == 0.18.*,
