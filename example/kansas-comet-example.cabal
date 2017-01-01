@@ -23,15 +23,15 @@ data-files:
 
 Executable kansas-comet-example
     Other-Modules:       Paths_kansas_comet_example
-    Build-Depends:     base                 >= 4.6      && < 4.10,
-                       aeson                >= 0.9      && < 1.1,
-                       data-default-class   >= 0.0.1    && < 0.2,
-                       scotty               >= 0.10     && < 0.12,
-                       semigroups           == 0.18.*,
-                       stm                  >= 2.2      && < 2.5,
-                       text                 >= 0.11.3.1 && < 1.6,
-                       wai-middleware-static == 0.8.0,
-                       kansas-comet         == 0.4
+    Build-Depends:     base                  >= 4.6      && < 4.10,
+                       aeson                 >= 0.9      && < 1.2,
+                       data-default-class    >= 0.0.1    && < 0.2,
+                       scotty                >= 0.10     && < 0.12,
+                       semigroups            == 0.18.*,
+                       stm                   >= 2.2      && < 2.5,
+                       text                  >= 0.11.3.1 && < 1.6,
+                       wai-middleware-static >= 0.8      && < 0.9,
+                       kansas-comet          == 0.4
 
     Main-is: Main.hs
     Hs-Source-Dirs: .
