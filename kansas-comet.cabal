@@ -19,6 +19,7 @@ tested-with:         GHC == 7.6.3
                    , GHC == 8.0.2
                    , GHC == 8.2.2
                    , GHC == 8.4.3
+                   , GHC == 8.6.1
 Description:
   A transport-level remote JavaScript RESTful push mechanism.
 
@@ -31,10 +32,10 @@ Library
   default-language:    Haskell2010
   build-depends:       aeson                >= 0.9      && < 1.5,
                        base                 >= 4.6      && < 4.12,
-                       containers           >= 0.4      && < 0.6,
+                       containers           >= 0.4      && < 0.7,
                        data-default-class   >= 0.0.1    && < 0.2,
                        scotty               >= 0.10     && < 0.12,
-                       stm                  >= 2.2      && < 2.5,
+                       stm                  >= 2.2      && < 2.6,
                        text                 >= 0.11.3.1 && < 1.6,
                        time                 >= 1.2      && < 1.9,
                        transformers         >= 0.3      && < 0.6,
