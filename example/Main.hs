@@ -12,11 +12,13 @@ import           Control.Monad
 import           Data.Aeson as A hiding ((.=))
 import           Data.Aeson.Types as AP hiding ((.=))
 import           Data.Default.Class
-import           Data.Semigroup
 import qualified Data.Text      as T
 
 -- import           Network.Wai      -- TMP for debug
 import           Network.Wai.Middleware.Static
+
+import           Prelude ()
+import           Prelude.Compat
 
 import           Web.Scotty.Comet as KC
 import           Web.Scotty (scotty, middleware)

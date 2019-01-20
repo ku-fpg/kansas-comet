@@ -39,10 +39,10 @@ data-files:
 Executable kansas-comet-example
     Other-Modules:       Paths_kansas_comet_example
     Build-Depends:     base                  >= 4.6      && < 4.13,
+                       base-compat-batteries >= 0.10     && < 0.11,
                        aeson                 >= 0.9      && < 1.5,
                        data-default-class    >= 0.0.1    && < 0.2,
                        scotty                >= 0.10     && < 0.12,
-                       semigroups            == 0.18.*,
                        stm                   >= 2.2      && < 2.6,
                        text                  >= 0.11.3.1 && < 1.6,
                        wai-middleware-static >= 0.8      && < 0.9,
