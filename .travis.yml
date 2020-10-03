@@ -8,7 +8,7 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.10
+# version: 0.10.3
 #
 version: ~> 1.0
 language: c
@@ -114,6 +114,7 @@ install:
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package kansas-comet-example' >> cabal.project ; fi
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
+    echo "constraints: http-date <0.0.9 || >0.0.9" >> cabal.project
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(kansas-comet|kansas-comet-example)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
@@ -145,6 +146,7 @@ script:
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package kansas-comet-example' >> cabal.project ; fi
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
+    echo "constraints: http-date <0.0.9 || >0.0.9" >> cabal.project
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(kansas-comet|kansas-comet-example)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
@@ -157,5 +159,5 @@ script:
   # haddock...
   - ${CABAL} v2-haddock $WITHCOMPILER --with-haddock $HADDOCK ${TEST} ${BENCH} all
 
-# REGENDATA ("0.10",["--output=.travis.yml","--config=cabal.haskell-ci","cabal.project"])
+# REGENDATA ("0.10.3",["--output=.travis.yml","--config=cabal.haskell-ci","cabal.project"])
 # EOF
