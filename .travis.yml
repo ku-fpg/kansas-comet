@@ -114,7 +114,6 @@ install:
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package kansas-comet-example' >> cabal.project ; fi
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
-    echo "constraints: http-date <0.0.9 || >0.0.9" >> cabal.project
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(kansas-comet|kansas-comet-example)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
@@ -146,7 +145,6 @@ script:
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package kansas-comet-example' >> cabal.project ; fi
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
-    echo "constraints: http-date <0.0.9 || >0.0.9" >> cabal.project
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(kansas-comet|kansas-comet-example)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
