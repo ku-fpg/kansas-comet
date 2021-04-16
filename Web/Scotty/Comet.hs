@@ -44,9 +44,9 @@ connect opt callback = do
    if not rtsSupportsBoundThreads  -- we need the -threaded flag turned on
    then do putStrLn "Application needs to be re-compiled with -threaded flag"
            exitFailure
-   else return ()                 
-                  
-          
+   else return ()
+
+
    when (verbose opt >= 1) $ putStrLn $ "kansas-comet connect with prefix=" ++ show (prefix opt)
 
    -- A unique number generator, or ephemeral generator.
@@ -88,19 +88,19 @@ connect opt callback = do
        post (capture $ prefix opt ++ "/") $ do
                 uq  <- liftIO $ newContext
                 text (LT.pack $ "$.kc.session(" ++ show server_id ++ "," ++ show uq ++ ");")
-    
+
        -- GET the updates to the documents (should this be an (empty) POST?)
-    
+
     --   liftIO $ print $ prefix opt ++ "/act/:id/:act"
        get (capture $ prefix opt ++ "/act/" ++ server_id ++ "/:id/:act") $ do
                 setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
                 -- do something and return a new list of commands to the client
                 num <- param "id"
-    
+
                 when (verbose opt >= 2) $ liftIO $ putStrLn $
                     "Kansas Comet: get .../act/" ++ show num
     --            liftIO $ print (num :: Int)
-    
+
                 let tryPushAction :: TMVar T.Text -> Int -> ActionM ()
                     tryPushAction var n = do
                         -- The PUSH archtecture means that we wait upto 3 seconds if there
@@ -111,11 +111,11 @@ connect opt callback = do
                                 b <- readTVar ping
                                 if b then return Nothing else do
                                      liftM Just (takeTMVar var)
-    
-    
+
+
                         when (verbose opt >= 2) $ liftIO $ putStrLn $
                                     "Kansas Comet (sending to " ++ show n ++ "):\n" ++ show res
-    
+
                         case res of
                          Just js -> do
     --                            liftIO $ putStrLn $ show js
@@ -123,28 +123,30 @@ connect opt callback = do
                          Nothing  ->
                                 -- give the browser something to do (approx every 3 seconds)
                                 text LT.empty
-    
+
                 db <- liftIO $ atomically $ readTVar contextDB
                 case Map.lookup num db of
                    Nothing  -> text (LT.pack $ "console.warn('Can not find act #" ++ show num ++ "');")
                    Just doc -> tryPushAction (sending doc) num
-    
-    
+
+
        post (capture $ prefix opt ++ "/reply/" ++ server_id ++ "/:id/:uq") $ do
                setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
                num <- param "id"
                uq :: Int <- param "uq"
                --liftIO $ print (num :: Int, event :: String)
-    
+
                when (verbose opt >= 2) $ liftIO $ putStrLn $
                     "Kansas Comet: post .../reply/" ++ show num ++ "/" ++ show uq
-    
+
                wrappedVal :: Value <- jsonData
                -- Unwrap the data wrapped, because 'jsonData' only supports
                -- objects or arrays, but not primitive values like numbers
                -- or booleans.
-               let val = fromJust $ let (Object m) = wrappedVal
-                                    in HashMap.lookup (T.pack "data") m
+               m <- case wrappedVal of
+                      Object m -> return m
+                      _ -> fail $ "Expected Object, received: " ++ show wrappedVal
+               let val = fromJust $ HashMap.lookup (T.pack "data") m
                --liftIO $ print (val :: Value)
                db <- liftIO $ atomically $ readTVar contextDB
                case Map.lookup num db of
@@ -153,26 +155,28 @@ connect opt callback = do
                    Just doc -> do
                        liftIO $ do
                              atomically $ do
-                               m <- readTVar (replies doc)
-                               writeTVar (replies doc) $ Map.insert uq val m
+                               mv <- readTVar (replies doc)
+                               writeTVar (replies doc) $ Map.insert uq val mv
                        text $ LT.pack ""
-    
-    
+
+
        post (capture $ prefix opt ++ "/event/" ++ server_id ++ "/:id") $ do
                setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
                num <- param "id"
-    
+
                when (verbose opt >= 2) $ liftIO $ putStrLn $
-                    "Kansas Comet: post .../event/" ++ show num 
-    
+                    "Kansas Comet: post .../event/" ++ show num
+
                wrappedVal :: Value <- jsonData
                -- Unwrap the data wrapped, because 'jsonData' only supports
                -- objects or arrays, but not primitive values like numbers
                -- or booleans.
-               let val = fromJust $ let (Object m) = wrappedVal
-                                    in HashMap.lookup (T.pack "data") m
+               m <- case wrappedVal of
+                      Object m -> return m
+                      _ -> fail $ "Expected Object, received: " ++ show wrappedVal
+               let val = fromJust $ HashMap.lookup (T.pack "data") m
                --liftIO $ print (val :: Value)
-    
+
                db <- liftIO $ atomically $ readTVar contextDB
                case Map.lookup num db of
                    Nothing  -> do
