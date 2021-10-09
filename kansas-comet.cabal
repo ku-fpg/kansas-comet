@@ -33,7 +33,11 @@ Library
   Exposed-modules:     Web.Scotty.Comet
   other-modules:       Paths_kansas_comet
   default-language:    Haskell2010
-  build-depends:       aeson                >= 0.9      && < 1.6,
+  build-depends:
+                       -- TODO: Eventually, we should bump the lower version
+                       -- bounds to >=2 so that we can remove some CPP in
+                       -- Web.Scotty.Comet.
+                       aeson                >= 0.9      && < 2.1,
                        base                 >= 4.6      && < 4.16,
                        containers           >= 0.4      && < 0.7,
                        data-default-class   >= 0.0.1    && < 0.2,

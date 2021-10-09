@@ -1,3 +1,6 @@
+## next [????.??.??]
+* Allow building with `aeson-2.0.0.0`.
+
 ## 0.4
 * Require `scotty` >= 0.10
 * `connect` now returns `IO (ScottyM ())`

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -26,13 +27,18 @@ import qualified Data.Map as Map
 import Control.Concurrent
 import Data.Default.Class
 import Data.Maybe ( fromJust )
-import qualified Data.HashMap.Strict as HashMap
 import System.Exit
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text      as T
 import Data.Time.Calendar
 import Data.Time.Clock
 import Numeric
+
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as KeyMap
+#else
+import qualified Data.HashMap.Strict as HashMap
+#endif
 
 -- | connect "/foobar" (...) gives a scotty session that:
 --
@@ -149,7 +155,7 @@ connect opt callback = do
                m <- case wrappedVal of
                       Object m -> return m
                       _ -> fail $ "Expected Object, received: " ++ show wrappedVal
-               let val = fromJust $ HashMap.lookup (T.pack "data") m
+               let val = fromJust $ lookupKM "data" m
                --liftIO $ print (val :: Value)
                db <- liftIO $ atomically $ readTVar contextDB
                case Map.lookup num db of
@@ -177,7 +183,7 @@ connect opt callback = do
                m <- case wrappedVal of
                       Object m -> return m
                       _ -> fail $ "Expected Object, received: " ++ show wrappedVal
-               let val = fromJust $ HashMap.lookup (T.pack "data") m
+               let val = fromJust $ lookupKM "data" m
                --liftIO $ print (val :: Value)
 
                db <- liftIO $ atomically $ readTVar contextDB
@@ -188,6 +194,13 @@ connect opt callback = do
                        liftIO $ atomically $ do
                                writeTChan (eventQueue doc) val
                        text $ LT.pack ""
+
+  where
+#if MIN_VERSION_aeson(2,0,0)
+    lookupKM = KeyMap.lookup
+#else
+    lookupKM = HashMap.lookup
+#endif
 
 -- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
 kCometPlugin :: IO String
