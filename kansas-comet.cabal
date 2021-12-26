@@ -43,7 +43,7 @@ Library
                        data-default-class   >= 0.0.1    && < 0.2,
                        scotty               >= 0.10     && < 0.13,
                        stm                  >= 2.2      && < 2.6,
-                       text                 >= 0.11.3.1 && < 1.6,
+                       text                 >= 0.11.3.1 && < 2.1,
                        time                 >= 1.2      && < 1.11,
                        transformers         >= 0.3      && < 0.6,
                        unordered-containers >= 0.2.3    && < 0.3
