@@ -21,8 +21,9 @@ tested-with:         GHC == 7.6.3
                    , GHC == 8.4.4
                    , GHC == 8.6.5
                    , GHC == 8.8.4
-                   , GHC == 8.10.4
-                   , GHC == 9.0.1
+                   , GHC == 8.10.7
+                   , GHC == 9.0.2
+                   , GHC == 9.2.2
 Description:
   A transport-level remote JavaScript RESTful push mechanism.
 
@@ -38,13 +39,13 @@ Library
                        -- bounds to >=2 so that we can remove some CPP in
                        -- Web.Scotty.Comet.
                        aeson                >= 0.9      && < 2.1,
-                       base                 >= 4.6      && < 4.16,
+                       base                 >= 4.6      && < 4.17,
                        containers           >= 0.4      && < 0.7,
                        data-default-class   >= 0.0.1    && < 0.2,
                        scotty               >= 0.10     && < 0.13,
                        stm                  >= 2.2      && < 2.6,
                        text                 >= 0.11.3.1 && < 2.1,
-                       time                 >= 1.2      && < 1.11,
+                       time                 >= 1.2      && < 1.12,
                        transformers         >= 0.3      && < 0.6,
                        unordered-containers >= 0.2.3    && < 0.3
 
