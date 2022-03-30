@@ -218,7 +218,6 @@ jobs:
           if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "package kansas-comet-example" >> cabal.project ; fi
           if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           cat >> cabal.project <<EOF
-          constraints: basement < 0.0.13 || > 0.0.13
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(kansas-comet|kansas-comet-example)$/; }' >> cabal.project.local
           cat cabal.project
