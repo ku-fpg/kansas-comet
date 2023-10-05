@@ -16,7 +16,8 @@ module Web.Scotty.Comet
     , defaultOptions
     ) where
 
-import Web.Scotty (ScottyM, text, post, capture, param, setHeader, get, ActionM, jsonData)
+import qualified Web.Scotty as Scotty
+import Web.Scotty (ScottyM, text, post, capture, setHeader, get, ActionM, jsonData)
 import Data.Aeson (Value(..))
 import Control.Monad
 import Control.Concurrent.STM as STM
@@ -104,7 +105,7 @@ connect opt callback = do
        get (capture $ prefix opt ++ "/act/" ++ server_id ++ "/:id/:act") $ do
                 setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
                 -- do something and return a new list of commands to the client
-                num <- param "id"
+                num <- captureParam "id"
 
                 when (verbose opt >= 2) $ liftIO $ putStrLn $
                     "Kansas Comet: get .../act/" ++ show num
@@ -141,8 +142,8 @@ connect opt callback = do
 
        post (capture $ prefix opt ++ "/reply/" ++ server_id ++ "/:id/:uq") $ do
                setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
-               num <- param "id"
-               uq :: Int <- param "uq"
+               num <- captureParam "id"
+               uq :: Int <- captureParam "uq"
                --liftIO $ print (num :: Int, event :: String)
 
                when (verbose opt >= 2) $ liftIO $ putStrLn $
@@ -171,7 +172,7 @@ connect opt callback = do
 
        post (capture $ prefix opt ++ "/event/" ++ server_id ++ "/:id") $ do
                setHeader "Cache-Control" "max-age=0, no-cache, private, no-store, must-revalidate"
-               num <- param "id"
+               num <- captureParam "id"
 
                when (verbose opt >= 2) $ liftIO $ putStrLn $
                     "Kansas Comet: post .../event/" ++ show num
@@ -200,6 +201,12 @@ connect opt callback = do
     lookupKM = KeyMap.lookup
 #else
     lookupKM = HashMap.lookup
+#endif
+
+#if MIN_VERSION_scotty(0,20,0)
+    captureParam = Scotty.captureParam
+#else
+    captureParam = Scotty.param
 #endif
 
 -- | 'kCometPlugin' provides the location of the Kansas Comet jQuery plugin.
