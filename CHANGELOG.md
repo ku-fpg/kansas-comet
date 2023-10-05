@@ -1,3 +1,6 @@
+## next [????.??.??]
+* Support building with `scotty-0.20`.
+
 ## 0.4.1 [2021.10.09]
 * Allow building with `aeson-2.0.0.0`.
 
