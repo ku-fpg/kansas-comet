@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.4.3 [2024.10.26]
 * Allow building with `data-default-class-0.2.*`.
 * Drop support for pre-8.0 versions of GHC.
 
