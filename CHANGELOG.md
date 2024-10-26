@@ -1,5 +1,6 @@
 ## next [????.??.??]
 * Allow building with `data-default-class-0.2.*`.
+* Drop support for pre-8.0 versions of GHC.
 
 ## 0.4.2 [2023.10.05]
 * Support building with `scotty-0.20`.

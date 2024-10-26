@@ -19,6 +19,7 @@ module Web.Scotty.Comet
 import qualified Web.Scotty as Scotty
 import Web.Scotty (ScottyM, text, post, capture, setHeader, get, ActionM, jsonData)
 import Data.Aeson (Value(..))
+import qualified Data.Aeson.KeyMap as KeyMap
 import Control.Monad
 import Control.Concurrent.STM as STM
 import Control.Concurrent.MVar as STM
@@ -34,12 +35,6 @@ import qualified Data.Text      as T
 import Data.Time.Calendar
 import Data.Time.Clock
 import Numeric
-
-#if MIN_VERSION_aeson(2,0,0)
-import qualified Data.Aeson.KeyMap as KeyMap
-#else
-import qualified Data.HashMap.Strict as HashMap
-#endif
 
 -- | connect "/foobar" (...) gives a scotty session that:
 --
@@ -156,7 +151,7 @@ connect opt callback = do
                m <- case wrappedVal of
                       Object m -> return m
                       _ -> fail $ "Expected Object, received: " ++ show wrappedVal
-               let val = fromJust $ lookupKM "data" m
+               let val = fromJust $ KeyMap.lookup "data" m
                --liftIO $ print (val :: Value)
                db <- liftIO $ atomically $ readTVar contextDB
                case Map.lookup num db of
@@ -184,7 +179,7 @@ connect opt callback = do
                m <- case wrappedVal of
                       Object m -> return m
                       _ -> fail $ "Expected Object, received: " ++ show wrappedVal
-               let val = fromJust $ lookupKM "data" m
+               let val = fromJust $ KeyMap.lookup "data" m
                --liftIO $ print (val :: Value)
 
                db <- liftIO $ atomically $ readTVar contextDB
@@ -197,12 +192,6 @@ connect opt callback = do
                        text $ LT.pack ""
 
   where
-#if MIN_VERSION_aeson(2,0,0)
-    lookupKM = KeyMap.lookup
-#else
-    lookupKM = HashMap.lookup
-#endif
-
 #if MIN_VERSION_scotty(0,20,0)
     captureParam = Scotty.captureParam
 #else
