@@ -54,4 +54,4 @@ Library
 
 source-repository head
   type:     git
-  location: git://github.com/ku-fpg/kansas-comet.git
+  location: https://github.com/ku-fpg/kansas-comet.git
