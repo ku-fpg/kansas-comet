@@ -1,4 +1,5 @@
 ## next [????.??.??]
+* Allow building with `base-4.22.*` and `time-1.15.*` (GHC 9.14).
 * Allow building with `scotty-0.30.*`.
 * Remove unused `transformers` and `unordered-containers` dependencies.
 
