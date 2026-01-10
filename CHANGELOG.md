@@ -1,4 +1,5 @@
 ## next [????.??.??]
+* Allow building with `scotty-0.30.*`.
 * Remove unused `transformers` and `unordered-containers` dependencies.
 
 ## 0.4.3 [2024.10.26]
